@@ -1,0 +1,26 @@
+[package]
+name = "tokencompact-fuzz"
+version = "0.0.0"
+publish = false
+edition = "2024"
+rust-version = "1.94.1"
+
+[package.metadata]
+cargo-fuzz = true
+
+[dependencies]
+libfuzzer-sys = "0.4"
+tokencompact-builtins = { path = "../crates/tokencompact-builtins" }
+
+[[bin]]
+name = "tokencompact"
+path = "fuzz_targets/tokencompact.rs"
+test = false
+doc = false
+bench = false
+
+[workspace]
+members = ["."]
+
+[lints.rust]
+unsafe_code = "deny"
