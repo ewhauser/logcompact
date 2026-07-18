@@ -9,6 +9,7 @@ config = json.loads((root / ".release-please-config.json").read_text())
 manifest = json.loads((root / ".release-please-manifest.json").read_text())
 cargo = tomllib.loads((root / "Cargo.toml").read_text())
 cargo_lock = tomllib.loads((root / "Cargo.lock").read_text())
+fuzz_cargo_lock = tomllib.loads((root / "fuzz" / "Cargo.lock").read_text())
 package_config = config["packages"]["."]
 version = manifest["."]
 
@@ -46,6 +47,14 @@ lock_versions = {
 }
 assert lock_versions == dict.fromkeys(workspace_crates, version)
 
+fuzz_workspace_crates = {"logcompact-builtins", "logcompact-core"}
+fuzz_lock_versions = {
+    package["name"]: package["version"]
+    for package in fuzz_cargo_lock["package"]
+    if package["name"] in fuzz_workspace_crates
+}
+assert fuzz_lock_versions == dict.fromkeys(fuzz_workspace_crates, version)
+
 updaters = package_config["extra-files"]
 cargo_jsonpaths = {
     updater["jsonpath"]
@@ -65,5 +74,17 @@ lock_updater = next(
 )
 for package in workspace_crates:
     assert f'@.name.value=="{package}"' in lock_updater["jsonpath"]
+
+fuzz_lock_updater = next(
+    updater
+    for updater in updaters
+    if updater["type"] == "toml" and updater["path"] == "fuzz/Cargo.lock"
+)
+for package in fuzz_workspace_crates:
+    assert f'@.name.value=="{package}"' in fuzz_lock_updater["jsonpath"]
+
+release_docs = (root / "RELEASING.md").read_text()
+assert "workflow: `release-please.yml`" in release_docs
+assert "workflow: `publish.yml`" in release_docs
 
 print("release-please configuration is consistent")
