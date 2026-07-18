@@ -20,14 +20,6 @@ The output limit is measured in serialized bytes. That is deterministic across
 machines and model providers; it is a stable proxy for token cost, not a claim
 to reproduce any particular tokenizer.
 
-## Renamed from tokencompact
-
-Version 0.2.0 renamed the project and all three packages from `tokencompact*`
-to `logcompact*`. Existing `tokencompact` 0.1.0 artifacts remain available for
-reproducible builds, but new development and releases use `logcompact`. See the
-[changelog](CHANGELOG.md#020---2026-07-18) for the exact dependency and import
-migration.
-
 ## Crates
 
 The dependency direction is deliberately one-way:
