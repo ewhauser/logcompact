@@ -13,7 +13,7 @@ import sys
 metadata = json.load(sys.stdin)
 print(next(package["version"] for package in metadata["packages"] if package["name"] == "logcompact-core"))
 ')"
-release_ref="${GITHUB_REF_NAME:-}"
+release_ref="${RELEASE_TAG:-${GITHUB_REF_NAME:-}}"
 if [[ -z "${release_ref}" ]]; then
   release_ref="$(git tag --points-at HEAD | sed -n '1p')"
 fi
