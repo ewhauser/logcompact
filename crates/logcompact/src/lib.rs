@@ -134,6 +134,14 @@ fn render_github(reduction: &Reduction) -> String {
                 output.push_str(",col=");
                 output.push_str(&column.to_string());
             }
+            if let Some(end_line) = location.end_line {
+                output.push_str(",endLine=");
+                output.push_str(&end_line.to_string());
+            }
+            if let Some(end_column) = location.end_column {
+                output.push_str(",endColumn=");
+                output.push_str(&end_column.to_string());
+            }
         }
         output.push_str("::");
         output.push_str(&escape_message(&diagnostic.message));
@@ -195,13 +203,20 @@ fn sarif_result(diagnostic: &Diagnostic, rule_id: &str) -> Value {
         .location
         .as_ref()
         .map_or_else(Vec::new, |location| {
+            let mut region = json!({
+                "startLine": location.line.unwrap_or(1),
+                "startColumn": location.column.unwrap_or(1)
+            });
+            if let Some(end_line) = location.end_line {
+                region["endLine"] = json!(end_line);
+            }
+            if let Some(end_column) = location.end_column {
+                region["endColumn"] = json!(end_column);
+            }
             vec![json!({
                 "physicalLocation": {
                     "artifactLocation": {"uri": location.path},
-                    "region": {
-                        "startLine": location.line.unwrap_or(1),
-                        "startColumn": location.column.unwrap_or(1)
-                    }
+                    "region": region
                 }
             })]
         });
@@ -271,6 +286,8 @@ mod tests {
                     path: "src/lib.rs".to_owned(),
                     line: Some(7),
                     column: Some(5),
+                    end_line: Some(8),
+                    end_column: Some(9),
                 }),
                 provenance: None,
                 quality: EvidenceQuality::Located,
@@ -289,9 +306,11 @@ mod tests {
         let reduction = reduction();
         assert!(render(&reduction, OutputFormat::Human).contains("src/lib.rs:7:5"));
         assert!(render(&reduction, OutputFormat::GitHub).contains("file=src/lib.rs,line=7,col=5"));
+        assert!(render(&reduction, OutputFormat::GitHub).contains("endLine=8,endColumn=9"));
         let sarif = render(&reduction, OutputFormat::Sarif);
         assert!(sarif.contains("\"version\": \"2.1.0\""));
         assert!(sarif.contains("src/lib.rs"));
+        assert!(sarif.contains("\"endLine\": 8"));
     }
 
     #[test]

@@ -14,6 +14,7 @@ some-command 2>&1 | logcompact
 logcompact build.log --format json --max-output-bytes 8192
 logcompact test.log --format github --fail-on error
 logcompact build.log --format sarif > diagnostics.sarif
+logcompact build.log --problem-matcher .github/compiler.json
 ```
 
 The output limit is measured in serialized bytes. That is deterministic across
@@ -32,8 +33,12 @@ The dependency direction is deliberately one-way:
 
 `logcompact-core` performs no I/O and knows nothing about CI providers,
 command runners, storage, or build systems. Applications can use the built-in
-pack, supply their own `Parser` implementations, or feed trusted structured
-findings into the same output-policy boundary.
+pack, compile self-contained GitHub/VS Code problem matcher definitions, supply
+their own `Parser` implementations, or feed trusted structured findings into
+the same output-policy boundary.
+
+See [PROBLEM_MATCHERS.md](PROBLEM_MATCHERS.md) for the supported matcher
+contract, safety bounds, CLI usage, and deliberate compatibility limits.
 
 ## Deterministic by construction
 

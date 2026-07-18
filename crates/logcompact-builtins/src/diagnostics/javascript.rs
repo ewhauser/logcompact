@@ -149,6 +149,8 @@ fn parse_swc_source_frame_location(line: &str) -> Option<Location> {
         path: compact_path(path.trim()),
         line: Some(line_number.parse::<u32>().ok()?),
         column: Some(column.parse::<u32>().ok()?),
+        end_line: None,
+        end_column: None,
     })
 }
 
@@ -406,6 +408,8 @@ fn parse_location(value: &str) -> Option<Location> {
         path: compact_path(&value[..path_end]),
         line: Some(line_number),
         column,
+        end_line: None,
+        end_column: None,
     })
 }
 

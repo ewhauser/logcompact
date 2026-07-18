@@ -7,6 +7,7 @@
 mod diagnostics;
 mod finalize;
 mod model;
+mod problem_matcher;
 mod redaction;
 mod streaming;
 mod test_failures;
@@ -25,6 +26,9 @@ pub use model::{
     Budget, Diagnostic, DiagnosticClass, EndReason, EvidenceQuality, FallbackPolicy, Limits,
     Location, LogLine, Provenance, Reduction, ReductionOptions, ReductionStats, Scope, ScopeKind,
     SessionOptions, Severity, Stream, TestFailure, TextInput,
+};
+pub use problem_matcher::{
+    ProblemMatcherError, ProblemMatcherLimits, ProblemMatcherParser, ProblemMatcherRegistry,
 };
 pub use redaction::{NoPathMapping, NoRedaction, PathMapper, Redactor};
 pub use streaming::{BuiltinDiagnosticParser, BuiltinParserOptions, builtin_parser_plan};

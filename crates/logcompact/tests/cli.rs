@@ -51,3 +51,44 @@ fn emits_redacted_json_and_honors_failure_threshold() {
     assert!(stdout.contains("undefined: [REDACTED]"));
     assert!(output.stderr.is_empty());
 }
+
+#[test]
+fn loads_github_problem_matcher_definitions() {
+    let mut matcher = tempfile::NamedTempFile::new().unwrap();
+    matcher
+        .write_all(
+            br#"{
+                "problemMatcher": [{
+                    "owner": "widget",
+                    "source": "widget compiler",
+                    "pattern": {
+                        "regexp": "^MATCH (.+):(\\d+):(\\d+)-(\\d+):(\\d+) \\[(warning|error)\\] (.+)$",
+                        "file": 1,
+                        "line": 2,
+                        "column": 3,
+                        "endLine": 4,
+                        "endColumn": 5,
+                        "severity": 6,
+                        "message": 7
+                    }
+                }]
+            }"#,
+        )
+        .unwrap();
+    let path = matcher.path().to_string_lossy().into_owned();
+    let output = run(
+        &["--problem-matcher", &path, "--format", "json"],
+        b"MATCH src/widget.dsl:4:2-5:8 [warning] unknown widget\n",
+    );
+
+    assert!(output.status.success());
+    assert!(output.stderr.is_empty());
+    let value: serde_json::Value = serde_json::from_slice(&output.stdout).unwrap();
+    let diagnostic = &value["diagnostics"][0];
+    assert_eq!(diagnostic["severity"], "warning");
+    assert_eq!(diagnostic["message"], "unknown widget");
+    assert_eq!(diagnostic["location"]["path"], "src/widget.dsl");
+    assert_eq!(diagnostic["location"]["line"], 4);
+    assert_eq!(diagnostic["location"]["end_line"], 5);
+    assert_eq!(diagnostic["provenance"]["label"], "widget compiler");
+}

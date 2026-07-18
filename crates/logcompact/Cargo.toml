@@ -21,6 +21,9 @@ clap.workspace = true
 logcompact-builtins.workspace = true
 serde_json.workspace = true
 
+[dev-dependencies]
+tempfile.workspace = true
+
 [[bin]]
 name = "logcompact"
 path = "src/main.rs"

@@ -38,6 +38,10 @@ pub struct Location {
     pub path: String,
     pub line: Option<u32>,
     pub column: Option<u32>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub end_line: Option<u32>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub end_column: Option<u32>,
 }
 
 /// Input channel within a scope.

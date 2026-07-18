@@ -2,6 +2,9 @@
 use libfuzzer_sys::fuzz_target;
 
 fuzz_target!(|data: &[u8]| {
+    let mut problem_matchers = logcompact_builtins::ProblemMatcherRegistry::default();
+    let _ = problem_matchers.add_json(data);
+
     let normalized = logcompact_builtins::normalize_terminal_text(data);
     let _ = logcompact_builtins::deduplicate_lines(&normalized);
     let _ = logcompact_builtins::reduce(
