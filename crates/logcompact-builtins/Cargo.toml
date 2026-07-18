@@ -1,5 +1,5 @@
 [package]
-name = "tokencompact-builtins"
+name = "logcompact-builtins"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
@@ -8,7 +8,7 @@ authors.workspace = true
 repository.workspace = true
 homepage.workspace = true
 description = "Deterministic compiler, linter, runtime, and test log parsers"
-documentation = "https://docs.rs/tokencompact-builtins"
+documentation = "https://docs.rs/logcompact-builtins"
 readme = "README.md"
 keywords = ["diagnostics", "logs", "parser", "ci", "llm"]
 categories = ["development-tools", "parsing"]
@@ -20,7 +20,7 @@ workspace = true
 test-support = []
 
 [dependencies]
-tokencompact-core.workspace = true
+logcompact-core.workspace = true
 serde_json.workspace = true
 
 [dev-dependencies]

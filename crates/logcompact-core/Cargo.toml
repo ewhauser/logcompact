@@ -1,5 +1,5 @@
 [package]
-name = "tokencompact-core"
+name = "logcompact-core"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
@@ -8,7 +8,7 @@ authors.workspace = true
 repository.workspace = true
 homepage.workspace = true
 description = "Deterministic streaming state machine for bounded log reduction"
-documentation = "https://docs.rs/tokencompact-core"
+documentation = "https://docs.rs/logcompact-core"
 readme = "README.md"
 keywords = ["diagnostics", "logs", "parser", "ci", "llm"]
 categories = ["development-tools", "parsing"]

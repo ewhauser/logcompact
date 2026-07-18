@@ -1,4 +1,4 @@
-# TokenCompact built-ins instructions
+# LogCompact built-ins instructions
 
 This crate is source-agnostic, synchronous, deterministic, and bounded. It must
 not depend on Bazel protocol/domain crates, MCP, storage, the command runner, an

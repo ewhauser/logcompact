@@ -3,8 +3,8 @@
 This repository reduces noisy logs into deterministic, token-efficient
 findings. Preserve these invariants:
 
-- Keep the dependency direction `tokencompact` -> `tokencompact-builtins` ->
-  `tokencompact-core`.
+- Keep the dependency direction `logcompact` -> `logcompact-builtins` ->
+  `logcompact-core`.
 - Keep the core and built-in reducers synchronous, deterministic, bounded, and
   independent of providers, build systems, processes, filesystems, networks,
   environment variables, clocks, randomness, and async runtimes.

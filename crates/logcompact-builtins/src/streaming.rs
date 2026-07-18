@@ -1,6 +1,6 @@
 use std::collections::BTreeMap;
 
-use tokencompact_core::{
+use logcompact_core::{
     Emitter, EndReason, EvidenceQuality, FallbackPolicy, LogLine, Parser, ParserPlan, Provenance,
     Scope, ScopeBoundary, Stream,
 };
@@ -189,14 +189,14 @@ fn stream_name(stream: Stream) -> &'static str {
 
 #[cfg(test)]
 mod tests {
-    use tokencompact_core::{
+    use logcompact_core::{
         Budget, EndReason, GenericRanker, NoPathMapping, NoRedaction, OutputPolicy,
         ReductionSession, Scope, SessionOptions,
     };
 
     use super::*;
 
-    fn reduce_chunks(chunks: &[&[u8]]) -> tokencompact_core::Reduction {
+    fn reduce_chunks(chunks: &[&[u8]]) -> logcompact_core::Reduction {
         let mut session = ReductionSession::new(
             builtin_parser_plan(BuiltinParserOptions::default()),
             SessionOptions {

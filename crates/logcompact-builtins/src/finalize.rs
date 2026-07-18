@@ -1,5 +1,5 @@
 use crate::{Budget, Diagnostic, Reduction};
-use tokencompact_core::{OutputPolicy, ReductionStats, finalize_findings};
+use logcompact_core::{OutputPolicy, ReductionStats, finalize_findings};
 
 pub(crate) fn finalize_with_policy(
     diagnostics: Vec<Diagnostic>,

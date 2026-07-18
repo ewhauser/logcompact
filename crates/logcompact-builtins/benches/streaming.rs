@@ -1,7 +1,7 @@
 use std::hint::black_box;
 
 use criterion::{Criterion, Throughput, criterion_group, criterion_main};
-use tokencompact_builtins::{
+use logcompact_builtins::{
     Budget, BuiltinParserOptions, EndReason, GenericRanker, NoPathMapping, NoRedaction,
     OutputPolicy, ReductionOptions, ReductionSession, Scope, SessionOptions, Stream, TextInput,
     builtin_parser_plan, reduce,

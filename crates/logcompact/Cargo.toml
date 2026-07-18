@@ -1,5 +1,5 @@
 [package]
-name = "tokencompact"
+name = "logcompact"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
@@ -8,7 +8,7 @@ authors.workspace = true
 repository.workspace = true
 homepage.workspace = true
 description = "Compact noisy logs into token-efficient diagnostics"
-documentation = "https://docs.rs/tokencompact"
+documentation = "https://docs.rs/logcompact"
 readme = "README.md"
 keywords = ["diagnostics", "logs", "cli", "ci", "llm"]
 categories = ["command-line-utilities", "development-tools"]
@@ -18,9 +18,9 @@ workspace = true
 
 [dependencies]
 clap.workspace = true
-tokencompact-builtins.workspace = true
+logcompact-builtins.workspace = true
 serde_json.workspace = true
 
 [[bin]]
-name = "tokencompact"
+name = "logcompact"
 path = "src/main.rs"

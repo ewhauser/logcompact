@@ -17,6 +17,10 @@ pub use diagnostics::{
     JavaScriptTestDiagnosticParser, JavaTestDiagnosticParser, PythonDiagnosticParser,
     parse_go_diagnostic,
 };
+pub use logcompact_core::{
+    Emitter, GenericRanker, OutputPolicy, Parser, ParserPlan, ParserPlanError, RankKey, Ranker,
+    ReductionSession, ScopeBoundary,
+};
 pub use model::{
     Budget, Diagnostic, DiagnosticClass, EndReason, EvidenceQuality, FallbackPolicy, Limits,
     Location, LogLine, Provenance, Reduction, ReductionOptions, ReductionStats, Scope, ScopeKind,
@@ -27,10 +31,6 @@ pub use streaming::{BuiltinDiagnosticParser, BuiltinParserOptions, builtin_parse
 pub use test_failures::{TestFailureAccumulator, TestFailureEvidence};
 pub use test_log::{TestLogReducer, TestLogReduction};
 pub use text::{deduplicate_lines, normalize_terminal_text};
-pub use tokencompact_core::{
-    Emitter, GenericRanker, OutputPolicy, Parser, ParserPlan, ParserPlanError, RankKey, Ranker,
-    ReductionSession, ScopeBoundary,
-};
 
 /// Reduces one or more text inputs with deterministic parser and input order.
 #[must_use]

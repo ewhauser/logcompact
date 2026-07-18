@@ -2,13 +2,13 @@ use std::io::Write;
 use std::process::{Command, Output, Stdio};
 
 fn run(args: &[&str], input: &[u8]) -> Output {
-    let mut child = Command::new(env!("CARGO_BIN_EXE_tokencompact"))
+    let mut child = Command::new(env!("CARGO_BIN_EXE_logcompact"))
         .args(args)
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
         .spawn()
-        .expect("tokencompact should start");
+        .expect("logcompact should start");
     child
         .stdin
         .take()

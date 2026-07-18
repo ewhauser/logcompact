@@ -1,7 +1,7 @@
-# tokencompact-builtins
+# logcompact-builtins
 
-`tokencompact-builtins` is the provider-neutral built-in parser pack for
-`tokencompact-core`. It recognizes common compiler, linter, runtime, and
+`logcompact-builtins` is the provider-neutral built-in parser pack for
+`logcompact-core`. It recognizes common compiler, linter, runtime, and
 test output without requiring a CI provider, build system, process runner,
 database, or async runtime.
 
@@ -9,14 +9,14 @@ The repository develops three publishable packages together:
 
 | Package | Responsibility |
 | --- | --- |
-| `tokencompact-core` | Streaming scopes, parser lifecycle, provenance, policies, bounds, and finalization |
-| `tokencompact-builtins` | Fixed built-in language and test-framework parser pack plus a batch compatibility API |
-| `tokencompact` | Incremental file/stdin input and human, JSON, JSONL, SARIF, and GitHub presentation |
+| `logcompact-core` | Streaming scopes, parser lifecycle, provenance, policies, bounds, and finalization |
+| `logcompact-builtins` | Fixed built-in language and test-framework parser pack plus a batch compatibility API |
+| `logcompact` | Incremental file/stdin input and human, JSON, JSONL, SARIF, and GitHub presentation |
 
 ## Batch API
 
 ```rust
-use tokencompact_builtins::{Budget, NoRedaction, ReductionOptions, TextInput, reduce};
+use logcompact_builtins::{Budget, NoRedaction, ReductionOptions, TextInput, reduce};
 
 let result = reduce(
     &[TextInput::new(b"src/main.go:12:4: undefined: total")],
@@ -34,7 +34,7 @@ assert_eq!(result.diagnostics[0].location.as_ref().unwrap().path, "src/main.go")
 ## Streaming API
 
 ```rust
-use tokencompact_builtins::{
+use logcompact_builtins::{
     Budget, BuiltinParserOptions, EndReason, GenericRanker, NoPathMapping,
     NoRedaction, OutputPolicy, ReductionSession, Scope, SessionOptions, Stream,
     builtin_parser_plan,

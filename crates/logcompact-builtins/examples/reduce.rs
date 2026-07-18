@@ -1,4 +1,4 @@
-use tokencompact_builtins::{Budget, NoRedaction, ReductionOptions, TextInput, reduce};
+use logcompact_builtins::{Budget, NoRedaction, ReductionOptions, TextInput, reduce};
 
 fn main() {
     let stderr = b"src/main.go:12:4: undefined: total";

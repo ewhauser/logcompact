@@ -1,4 +1,4 @@
-# TokenCompact core instructions
+# LogCompact core instructions
 
 This crate is the extraction boundary for the reusable log-reduction engine.
 It must remain synchronous, deterministic, bounded, and free of provider,
