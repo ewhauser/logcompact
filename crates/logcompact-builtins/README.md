@@ -77,7 +77,8 @@ can be compiled before input begins and appended to a parser plan:
 
 ```rust
 use logcompact_builtins::{
-    BuiltinParserOptions, ProblemMatcherRegistry, builtin_parser_plan,
+    BuiltinParserOptions, ProblemMatcherRegistry,
+    builtin_parser_plan_with_problem_matchers,
 };
 
 let mut registry = ProblemMatcherRegistry::default();
@@ -92,13 +93,17 @@ registry.add_json(br#"{
     }]
 }"#).expect("the matcher definition should compile");
 
-let mut plan = builtin_parser_plan(BuiltinParserOptions::default());
-plan.push(registry.into_parser()).expect("the parser id is unique");
+let plan = builtin_parser_plan_with_problem_matchers(
+    BuiltinParserOptions::default(),
+    registry,
+);
 ```
 
 The registry performs no I/O. It validates all definitions and compiles their
-bounded state machines atomically. See the repository's
-[`PROBLEM_MATCHERS.md`](../../PROBLEM_MATCHERS.md) for compatibility details.
+bounded state machines atomically. A custom owner matching a stable built-in
+owner replaces that built-in; other owners extend the plan. See the
+repository's [`PROBLEM_MATCHERS.md`](../../PROBLEM_MATCHERS.md) for
+compatibility details.
 
 Run `make boundary` from the repository root to verify that no provider-specific
 semantics or workspace-internal dependencies have leaked into these packages.

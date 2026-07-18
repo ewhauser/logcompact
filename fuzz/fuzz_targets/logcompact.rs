@@ -3,7 +3,7 @@ use libfuzzer_sys::fuzz_target;
 
 fuzz_target!(|data: &[u8]| {
     let mut problem_matchers = logcompact_builtins::ProblemMatcherRegistry::default();
-    let _ = problem_matchers.add_json(data);
+    let problem_matchers_valid = problem_matchers.add_json(data).is_ok();
 
     let normalized = logcompact_builtins::normalize_terminal_text(data);
     let _ = logcompact_builtins::deduplicate_lines(&normalized);
@@ -19,10 +19,17 @@ fuzz_target!(|data: &[u8]| {
         &logcompact_builtins::NoRedaction,
     );
 
+    let parser_options = logcompact_builtins::BuiltinParserOptions::default();
+    let parser_plan = if problem_matchers_valid {
+        logcompact_builtins::builtin_parser_plan_with_problem_matchers(
+            parser_options,
+            problem_matchers,
+        )
+    } else {
+        logcompact_builtins::builtin_parser_plan(parser_options)
+    };
     let mut session = logcompact_builtins::ReductionSession::new(
-        logcompact_builtins::builtin_parser_plan(
-            logcompact_builtins::BuiltinParserOptions::default(),
-        ),
+        parser_plan,
         logcompact_builtins::SessionOptions {
             budget: logcompact_builtins::Budget {
                 max_bytes: 4 * 1024,

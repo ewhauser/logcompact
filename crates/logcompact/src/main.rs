@@ -7,8 +7,9 @@ use clap::{Parser as ClapParser, ValueEnum};
 use logcompact::{OutputFormat, has_severity, render};
 use logcompact_builtins::{
     Budget, BuiltinParserOptions, EndReason, GenericRanker, Limits, OutputPolicy, PathMapper,
-    ProblemMatcherLimits, ProblemMatcherParser, ProblemMatcherRegistry, Redactor, ReductionSession,
-    Scope, ScopeKind, SessionOptions, Severity, Stream, builtin_parser_plan,
+    ProblemMatcherLimits, ProblemMatcherRegistry, Redactor, ReductionSession, Scope, ScopeKind,
+    SessionOptions, Severity, Stream, builtin_parser_plan,
+    builtin_parser_plan_with_problem_matchers,
 };
 
 #[derive(ClapParser, Debug)]
@@ -54,7 +55,7 @@ struct Args {
     #[arg(long)]
     strip_prefix: Vec<String>,
 
-    /// GitHub/VS Code problem matcher JSON file. Repeat as needed; later owners replace earlier ones.
+    /// GitHub/VS Code matcher JSON. Later owners replace earlier or same-owner built-ins.
     #[arg(long, value_name = "FILE")]
     problem_matcher: Vec<PathBuf>,
 
@@ -128,14 +129,14 @@ fn main() -> Result<(), Box<dyn Error>> {
     let redactor = LiteralRedactor(args.redact_literal.clone());
     let path_mapper = PrefixPathMapper(args.strip_prefix.clone());
     let ranker = GenericRanker;
-    let problem_matchers = load_problem_matchers(&args.problem_matcher)?;
-    let mut parser_plan = builtin_parser_plan(BuiltinParserOptions {
+    let parser_options = BuiltinParserOptions {
         max_buffered_scope_bytes: args.max_input_bytes,
         ..BuiltinParserOptions::default()
-    });
-    if let Some(parser) = problem_matchers {
-        parser_plan.push(parser)?;
-    }
+    };
+    let parser_plan = load_problem_matchers(&args.problem_matcher)?.map_or_else(
+        || builtin_parser_plan(parser_options),
+        |registry| builtin_parser_plan_with_problem_matchers(parser_options, registry),
+    );
     let mut session = ReductionSession::new(
         parser_plan,
         SessionOptions {
@@ -213,7 +214,7 @@ fn main() -> Result<(), Box<dyn Error>> {
 
 fn load_problem_matchers(
     paths: &[PathBuf],
-) -> Result<Option<ProblemMatcherParser>, Box<dyn Error>> {
+) -> Result<Option<ProblemMatcherRegistry>, Box<dyn Error>> {
     if paths.is_empty() {
         return Ok(None);
     }
@@ -236,7 +237,7 @@ fn load_problem_matchers(
             format!("could not load problem matcher {}: {error}", path.display())
         })?;
     }
-    Ok(Some(registry.into_parser()))
+    Ok(Some(registry))
 }
 
 fn stream_reader(

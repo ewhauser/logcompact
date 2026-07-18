@@ -5,7 +5,7 @@ use logcompact_core::{
     Scope, ScopeBoundary, Stream,
 };
 
-use crate::diagnostics;
+use crate::diagnostics::{self, BuiltinMatcherOverrides};
 use crate::test_log::TestLogReducer;
 
 /// Fixed options for the built-in parser pack in a streaming session.
@@ -13,6 +13,7 @@ use crate::test_log::TestLogReducer;
 pub struct BuiltinParserOptions {
     pub fallback: FallbackPolicy,
     pub max_buffered_scope_bytes: usize,
+    pub overrides: BuiltinMatcherOverrides,
 }
 
 impl Default for BuiltinParserOptions {
@@ -20,6 +21,7 @@ impl Default for BuiltinParserOptions {
         Self {
             fallback: FallbackPolicy::Generic,
             max_buffered_scope_bytes: 1024 * 1024,
+            overrides: BuiltinMatcherOverrides::default(),
         }
     }
 }
@@ -76,6 +78,7 @@ impl BuiltinDiagnosticParser {
                 buffer.text.as_bytes(),
                 &mut parsed,
                 self.options.fallback,
+                self.options.overrides,
             );
             for mut diagnostic in parsed {
                 if diagnostic.location.is_some() {

@@ -92,3 +92,37 @@ fn loads_github_problem_matcher_definitions() {
     assert_eq!(diagnostic["location"]["end_line"], 5);
     assert_eq!(diagnostic["provenance"]["label"], "widget compiler");
 }
+
+#[test]
+fn same_owner_problem_matcher_replaces_a_builtin() {
+    let mut matcher = tempfile::NamedTempFile::new().unwrap();
+    matcher
+        .write_all(
+            br#"{
+                "problemMatcher": [{
+                    "owner": "go",
+                    "source": "custom go",
+                    "pattern": {
+                        "regexp": "^(.+):(\\d+):(\\d+): (.+)$",
+                        "file": 1,
+                        "line": 2,
+                        "column": 3,
+                        "message": 4
+                    }
+                }]
+            }"#,
+        )
+        .unwrap();
+    let path = matcher.path().to_string_lossy().into_owned();
+    let output = run(
+        &["--problem-matcher", &path, "--format", "json"],
+        b"src/main.go:12:4: undefined: total\n",
+    );
+
+    assert!(output.status.success());
+    assert!(output.stderr.is_empty());
+    let value: serde_json::Value = serde_json::from_slice(&output.stdout).unwrap();
+    assert_eq!(value["diagnostics"].as_array().unwrap().len(), 1);
+    assert_eq!(value["diagnostics"][0]["class"], "tool");
+    assert_eq!(value["diagnostics"][0]["provenance"]["label"], "custom go");
+}

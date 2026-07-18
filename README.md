@@ -40,8 +40,8 @@ the same output-policy boundary.
 See [PROBLEM_MATCHERS.md](PROBLEM_MATCHERS.md) for the supported matcher
 contract, configuration examples, precedence with built-ins, performance
 guidance, safety bounds, and deliberate compatibility limits. CLI matchers
-extend the built-ins: precise custom matches suppress generic fallbacks, while
-recognized built-in diagnostics remain available as separate evidence.
+extend the built-ins by default. A custom matcher whose `owner` equals a stable
+built-in owner replaces that built-in for the invocation.
 
 ## Deterministic by construction
 

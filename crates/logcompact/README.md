@@ -17,4 +17,5 @@ Formats are `human`, `json`, `jsonl`, `sarif`, and `github`. Repeated
 deduplicated or serialized. Repeated `--strip-prefix` arguments provide a pure
 CI workspace-path projection without giving the reducer filesystem access.
 Repeated `--problem-matcher` arguments load self-contained GitHub Actions or
-inline VS Code matcher definitions; later definitions replace earlier owners.
+inline VS Code matcher definitions. Later definitions replace earlier owners,
+and a custom owner matching a stable built-in owner replaces that built-in.

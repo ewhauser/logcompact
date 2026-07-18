@@ -18,6 +18,59 @@ pub use java::JavaTestDiagnosticParser;
 pub use javascript::JavaScriptTestDiagnosticParser;
 pub use python::PythonDiagnosticParser;
 
+/// Stable problem-matcher owners reserved by the built-in diagnostic pack.
+pub const BUILTIN_MATCHER_OWNERS: &[&str] = &[
+    "javascript-swc",
+    "cpp-linker",
+    "java-compiler",
+    "rust-compiler",
+    "javascript-test",
+    "java-test",
+    "python",
+    "cpp",
+    "typescript",
+    "protobuf",
+    "go",
+];
+
+/// Built-in diagnostic matchers replaced by custom matchers with the same owner.
+#[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
+pub struct BuiltinMatcherOverrides(u16);
+
+impl BuiltinMatcherOverrides {
+    #[must_use]
+    pub fn from_owners<'a>(owners: impl IntoIterator<Item = &'a str>) -> Self {
+        let mut overrides = Self::default();
+        for owner in owners {
+            overrides.insert(owner);
+        }
+        overrides
+    }
+
+    #[must_use]
+    pub fn contains(self, owner: &str) -> bool {
+        builtin_owner_bit(owner).is_some_and(|bit| self.0 & bit != 0)
+    }
+
+    #[must_use]
+    pub const fn union(self, other: Self) -> Self {
+        Self(self.0 | other.0)
+    }
+
+    fn insert(&mut self, owner: &str) {
+        if let Some(bit) = builtin_owner_bit(owner) {
+            self.0 |= bit;
+        }
+    }
+}
+
+fn builtin_owner_bit(owner: &str) -> Option<u16> {
+    BUILTIN_MATCHER_OWNERS
+        .iter()
+        .position(|candidate| *candidate == owner)
+        .map(|index| 1_u16 << index)
+}
+
 /// Static built-in reducer contract. Function pointers keep dispatch and
 /// allocation costs identical regardless of how many parser modules exist.
 #[derive(Clone, Copy)]
@@ -111,11 +164,15 @@ pub(crate) fn add_text_diagnostics(
     input: &[u8],
     diagnostics: &mut Vec<Diagnostic>,
     fallback: FallbackPolicy,
+    overrides: BuiltinMatcherOverrides,
 ) {
     let normalized = normalize_terminal_text(input);
     let mut context = TextDiagnosticContext::new(diagnostics);
     for reducer in TEXT_DIAGNOSTIC_REDUCERS {
         debug_assert!(!reducer.name.is_empty());
+        if overrides.contains(reducer.name) {
+            continue;
+        }
         (reducer.reduce)(&normalized, &mut context);
     }
     arbitration::reduce_lines(
@@ -123,6 +180,7 @@ pub(crate) fn add_text_diagnostics(
         &mut context,
         LINE_DIAGNOSTIC_REDUCERS,
         fallback == FallbackPolicy::Generic,
+        overrides,
     );
 }
 
@@ -220,6 +278,22 @@ mod tests {
                 .collect::<Vec<_>>(),
             ["cpp", "typescript", "protobuf", "go"]
         );
+        assert_eq!(
+            BUILTIN_MATCHER_OWNERS,
+            [
+                "javascript-swc",
+                "cpp-linker",
+                "java-compiler",
+                "rust-compiler",
+                "javascript-test",
+                "java-test",
+                "python",
+                "cpp",
+                "typescript",
+                "protobuf",
+                "go",
+            ]
+        );
     }
 
     #[test]
@@ -229,6 +303,7 @@ mod tests {
             b"src/looks_like.cc:7:3: error: first parser wins",
             &mut diagnostics,
             FallbackPolicy::Generic,
+            BuiltinMatcherOverrides::default(),
         );
         assert_eq!(diagnostics.len(), 1);
         assert_eq!(

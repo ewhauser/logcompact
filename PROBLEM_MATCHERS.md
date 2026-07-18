@@ -61,9 +61,9 @@ logcompact build.log \
 ```
 
 Each matcher needs a non-empty `owner`. If the same owner is registered more
-than once, the last definition replaces the earlier definition. This only
-resolves collisions among configured problem matchers; it does not replace a
-Logcompact built-in parser.
+than once, the last definition replaces the earlier definition. Stable owners
+are also assigned to Logcompact's built-ins. A custom matcher using one of
+those owners replaces that built-in for the entire invocation.
 
 A file may contain the usual `{ "problemMatcher": [...] }` wrapper, one inline
 matcher object, or an array of inline matcher objects. Definitions are fully
@@ -130,47 +130,83 @@ is also considered as the possible first line of a new match.
 
 ## Precedence with built-ins
 
-The CLI always enables the built-in parsers. Configured problem matchers are
-additive and run on the same normalized lines; they do not short-circuit or
-disable a built-in parser.
+The CLI starts with every built-in matcher enabled. A custom matcher overrides
+a built-in when their owners are exactly equal. Other custom owners extend the
+built-ins and run on the same normalized lines. Owner matching is
+case-sensitive; library consumers can enumerate the same stable list through
+`BUILTIN_MATCHER_OWNERS`.
+
+| Built-in owner | Coverage |
+| --- | --- |
+| `rust-compiler` | Multiline rustc diagnostics and type details |
+| `cpp` | GCC/Clang-style compiler diagnostics |
+| `cpp-linker` | C and C++ linker diagnostics |
+| `go` | Go compiler diagnostics |
+| `java-compiler` | Java compiler diagnostics |
+| `javascript-swc` | SWC diagnostics |
+| `typescript` | TypeScript diagnostics |
+| `protobuf` | Protobuf compiler diagnostics |
+| `python` | Python locations and tracebacks |
+| `javascript-test` | JavaScript test diagnostics |
+| `java-test` | Java test diagnostics |
+
+For example, this custom matcher replaces the built-in Rust compiler matcher:
+
+```json
+{
+  "owner": "rust-compiler",
+  "pattern": {
+    "regexp": "^CUSTOM-RUST (.+):(\\d+):(\\d+): (.+)$",
+    "file": 1,
+    "line": 2,
+    "column": 3,
+    "message": 4
+  }
+}
+```
+
+Replacement disables that built-in before parsing; it is not an
+after-the-fact output preference. The custom definition is therefore
+authoritative, and diagnostics that it does not recognize may be lost. Use a
+new owner when the matcher should merely add coverage.
 
 The deterministic arbitration rules are:
 
 1. Among configured problem matchers with the same `owner`, the last loaded
    definition is the only one that runs.
-2. A located problem-matcher finding suppresses an overlapping generic
+2. A custom owner matching a built-in owner disables that built-in and takes
+   its place.
+3. A located problem-matcher finding suppresses an overlapping generic
    fallback. This is the normal result for a format the built-ins did not
    recognize precisely.
-3. A recognized built-in located or structured finding is not suppressed by a
-   problem matcher. Both findings remain, because the built-in may contain
-   richer language-specific evidence and the custom matcher may express a
-   caller-specific interpretation.
-4. Output budgets retain errors before warnings and notes. At equal severity,
+4. A non-overriding matcher does not suppress a recognized built-in located or
+   structured finding. Both remain as separate evidence.
+5. Output budgets retain errors before warnings and notes. At equal severity,
    the generic ranker orders built-in compiler, test, lint, and infrastructure
    diagnostics before custom problem-matcher diagnostics, which use the
    `tool` class.
 
-Therefore, use a problem matcher to extend coverage, not to override an
-existing built-in interpretation. If both recognize the same line, JSON output
-will preserve their different provenance and may contain both findings.
-Library consumers that require replacement semantics can construct a
-`ParserPlan` containing only their `ProblemMatcherParser` or provide a custom
-`Ranker`; the CLI deliberately keeps its built-ins enabled.
+This makes intent part of configuration: reuse the built-in owner to replace,
+or choose a new owner to extend. Library consumers get the same behavior by
+constructing their plan with `builtin_parser_plan_with_problem_matchers`.
 
 ## Performance guidance
 
-For the CLI, built-ins alone perform best because every configured matcher adds
-at least one regex attempt per input line. Matcher cost grows with matcher
-count, pattern count, input line length, and how often multiline prefixes
-match. The regex engine guarantees linear-time matching, but it cannot remove
-that additive work.
+Built-ins alone are the general-purpose fast path. A non-overriding custom
+matcher adds at least one regex attempt per input line. An overriding matcher
+removes the corresponding built-in work but replaces it with regex work, so
+the result depends on the built-in and pattern complexity. Matcher cost grows
+with matcher count, pattern count, input line length, and how often multiline
+prefixes match. The regex engine guarantees linear-time matching, but it cannot
+remove that additive work.
 
 Choose the smallest parser plan that meets the accuracy requirement:
 
 | Input | Recommended choice |
 | --- | --- |
 | A compiler, test framework, or runtime already recognized by Logcompact | Built-ins only |
-| One unsupported, stable single-line format | One anchored single-line problem matcher |
+| One unsupported, stable single-line format | One anchored matcher with a new owner |
+| A supported format that needs different parsing | A custom matcher using the built-in owner |
 | A header followed by several consecutive diagnostics | A multiline matcher with `loop` only on the final pattern |
 | A high-volume service that accepts one fixed format | A library `ParserPlan` containing only the compiled matcher, if built-in coverage is not needed |
 | Mixed or evolving logs | Built-ins plus the minimum number of custom matchers needed to fill gaps |
@@ -179,8 +215,9 @@ For the narrow fixed-format corpus in the repository benchmark, the expected
 speed order is matcher-only, built-ins-only, then combined. Those modes do not
 provide equal coverage: matcher-only wins by skipping every language and test
 parser it does not need, while combined deliberately pays for both forms of
-recognition. In the CLI, where built-ins are always enabled, built-ins-only is
-the fastest choice and combined is the compatibility-first choice.
+recognition. In the CLI, built-ins-only is the default fast path and a new
+custom owner is the compatibility-first choice. Reusing a built-in owner trades
+that parser's coverage and cost for the custom definition.
 
 For faster custom definitions:
 

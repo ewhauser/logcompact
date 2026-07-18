@@ -94,6 +94,14 @@ impl ProblemMatcherRegistry {
         self.matchers.len()
     }
 
+    /// Returns the built-in matcher owners replaced by this registry.
+    #[must_use]
+    pub fn builtin_overrides(&self) -> crate::BuiltinMatcherOverrides {
+        crate::BuiltinMatcherOverrides::from_owners(
+            self.matchers.iter().map(|matcher| matcher.owner.as_str()),
+        )
+    }
+
     /// Compiles one GitHub problem-matcher document, a VS Code inline matcher,
     /// or an array of inline matchers. The registry is unchanged on failure.
     pub fn add_json(&mut self, input: &[u8]) -> Result<(), ProblemMatcherError> {
@@ -1032,8 +1040,10 @@ mod tests {
     fn reduce_with_builtins(definition: &[u8], input: &[u8]) -> Reduction {
         let mut registry = ProblemMatcherRegistry::default();
         registry.add_json(definition).unwrap();
-        let mut plan = crate::builtin_parser_plan(crate::BuiltinParserOptions::default());
-        plan.push(registry.into_parser()).unwrap();
+        let plan = crate::builtin_parser_plan_with_problem_matchers(
+            crate::BuiltinParserOptions::default(),
+            registry,
+        );
         let mut session = ReductionSession::new(
             plan,
             SessionOptions {
@@ -1191,6 +1201,43 @@ mod tests {
         assert_eq!(recognized.diagnostics.len(), 2);
         assert_eq!(recognized.diagnostics[0].class, DiagnosticClass::Compiler);
         assert_eq!(recognized.diagnostics[1].class, DiagnosticClass::Tool);
+    }
+
+    #[test]
+    fn a_custom_owner_replaces_the_matching_builtin() {
+        let definition = br#"{
+            "problemMatcher": [{
+                "owner": "rust-compiler",
+                "source": "custom rust",
+                "pattern": [
+                    {
+                        "regexp": "^error\\[(E\\d+)\\]: (.+)$",
+                        "code": 1, "message": 2
+                    },
+                    {
+                        "regexp": "^ --> (.+):(\\d+):(\\d+)$",
+                        "file": 1, "line": 2, "column": 3
+                    }
+                ]
+            }]
+        }"#;
+        let reduction = reduce_with_builtins(
+            definition,
+            b"error[E0308]: mismatched types\n --> src/lib.rs:7:5\n",
+        );
+        assert_eq!(reduction.diagnostics.len(), 1);
+        assert_eq!(reduction.diagnostics[0].class, DiagnosticClass::Tool);
+        assert_eq!(reduction.diagnostics[0].code.as_deref(), Some("E0308"));
+        assert_eq!(reduction.diagnostics[0].message, "mismatched types");
+        assert_eq!(
+            reduction.diagnostics[0]
+                .provenance
+                .as_ref()
+                .unwrap()
+                .label
+                .as_deref(),
+            Some("custom rust")
+        );
     }
 
     #[test]
