@@ -21,13 +21,13 @@ boundary:
 check: fmt boundary test lint doc
 
 package-check:
-	cargo package --list -p tokencompact-core --locked --allow-dirty
-	cargo package --list -p tokencompact-builtins --locked --allow-dirty
-	cargo package --list -p tokencompact --locked --allow-dirty
-	cargo package -p tokencompact-core --locked --allow-dirty
+	cargo package --list -p logcompact-core --locked --allow-dirty
+	cargo package --list -p logcompact-builtins --locked --allow-dirty
+	cargo package --list -p logcompact --locked --allow-dirty
+	cargo package -p logcompact-core --locked --allow-dirty
 
 fuzz-smoke:
-	rustup run nightly cargo fuzz run tokencompact -- -max_total_time=10
+	rustup run nightly cargo fuzz run logcompact -- -max_total_time=10
 
 bench:
-	cargo bench -p tokencompact-builtins --bench streaming
+	cargo bench -p logcompact-builtins --bench streaming

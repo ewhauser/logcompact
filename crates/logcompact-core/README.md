@@ -1,6 +1,6 @@
-# tokencompact-core
+# logcompact-core
 
-`tokencompact-core` is a synchronous, provider-neutral state machine for
+`logcompact-core` is a synchronous, provider-neutral state machine for
 turning bounded log streams and trusted structured findings into deterministic
 diagnostics. It performs no I/O and has no async runtime, command runner,
 storage, network, environment, or provider-protocol dependency.
@@ -16,11 +16,11 @@ The core owns:
 - caller-supplied path mapping and redaction, in that order.
 
 It deliberately contains no compiler or test-framework grammar. Use the
-`tokencompact-builtins` crate for the built-in parser pack, or implement `Parser`
+`logcompact-builtins` crate for the built-in parser pack, or implement `Parser`
 for a domain-specific pack.
 
 ```rust
-use tokencompact_core::{
+use logcompact_core::{
     Budget, Diagnostic, DiagnosticClass, Emitter, EndReason, GenericRanker,
     LogLine, NoPathMapping, NoRedaction, OutputPolicy, Parser, ParserPlan,
     ReductionSession, Scope, SessionOptions, Severity, Stream,
@@ -64,7 +64,7 @@ session.begin_scope(Scope::step("unit-tests"));
 session.push_chunk("unit-tests", Stream::Stderr, b"thread 'x' panicked at src/lib.rs\n");
 session.end_scope("unit-tests", EndReason::Complete);
 let result = session.finish();
-# Ok::<(), tokencompact_core::ParserPlanError>(())
+# Ok::<(), logcompact_core::ParserPlanError>(())
 ```
 
 Parser plans are constructed before input is accepted; empty and duplicate IDs

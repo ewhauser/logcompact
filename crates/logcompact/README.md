@@ -1,14 +1,14 @@
-# tokencompact
+# logcompact
 
-`tokencompact` incrementally parses generic compiler, test, lint, and tool
+`logcompact` incrementally parses generic compiler, test, lint, and tool
 logs from stdin or files. It is a presentation adapter over
-`tokencompact-core` and `tokencompact-builtins`; it does not launch commands
+`logcompact-core` and `logcompact-builtins`; it does not launch commands
 or retain raw evidence.
 
 ```console
-some-command 2>&1 | tokencompact --format human
-tokencompact build.log --format sarif > diagnostics.sarif
-tokencompact test.log --format github --fail-on error
+some-command 2>&1 | logcompact --format human
+logcompact build.log --format sarif > diagnostics.sarif
+logcompact test.log --format github --fail-on error
 ```
 
 Formats are `human`, `json`, `jsonl`, `sarif`, and `github`. Repeated

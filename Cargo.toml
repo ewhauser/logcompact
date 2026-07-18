@@ -1,26 +1,26 @@
 [workspace]
 members = [
-    "crates/tokencompact-core",
-    "crates/tokencompact-builtins",
-    "crates/tokencompact",
+    "crates/logcompact-core",
+    "crates/logcompact-builtins",
+    "crates/logcompact",
 ]
 resolver = "3"
 
 [workspace.package]
-version = "0.1.0"
+version = "0.2.0"
 edition = "2024"
 rust-version = "1.94.1"
 license = "MIT"
 authors = ["Eric Hauser"]
-repository = "https://github.com/ewhauser/tokencompact"
-homepage = "https://github.com/ewhauser/tokencompact"
+repository = "https://github.com/ewhauser/logcompact"
+homepage = "https://github.com/ewhauser/logcompact"
 
 [workspace.lints.rust]
 unsafe_code = "deny"
 
 [workspace.dependencies]
-tokencompact-core = { path = "crates/tokencompact-core", version = "0.1.0" }
-tokencompact-builtins = { path = "crates/tokencompact-builtins", version = "0.1.0" }
+logcompact-core = { path = "crates/logcompact-core", version = "0.2.0" }
+logcompact-builtins = { path = "crates/logcompact-builtins", version = "0.2.0" }
 clap = { version = "4", features = ["derive"] }
 criterion = "0.8"
 serde = { version = "1", features = ["derive"] }

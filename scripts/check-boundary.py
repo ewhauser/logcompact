@@ -12,9 +12,9 @@ ROOT = Path(__file__).resolve().parents[1]
 CRATES = ROOT / "crates"
 
 EXPECTED_DEPENDENCIES = {
-    "tokencompact-core": {"serde", "serde_json"},
-    "tokencompact-builtins": {"tokencompact-core", "serde_json"},
-    "tokencompact": {"clap", "tokencompact-builtins", "serde_json"},
+    "logcompact-core": {"serde", "serde_json"},
+    "logcompact-builtins": {"logcompact-core", "serde_json"},
+    "logcompact": {"clap", "logcompact-builtins", "serde_json"},
 }
 
 # Provider and build-system concepts belong in downstream adapters. Matching is
@@ -77,11 +77,11 @@ def semantic_errors() -> list[str]:
 def main() -> int:
     errors = dependency_errors() + semantic_errors()
     if errors:
-        print("tokencompact boundary failed:", file=sys.stderr)
+        print("logcompact boundary failed:", file=sys.stderr)
         for error in errors:
             print(f"  - {error}", file=sys.stderr)
         return 1
-    print("tokencompact dependency and semantic boundary is intact")
+    print("logcompact dependency and semantic boundary is intact")
     return 0
 
 

@@ -1,5 +1,5 @@
+use logcompact_builtins::{Diagnostic, Reduction, Severity, TestFailure};
 use serde_json::{Value, json};
-use tokencompact_builtins::{Diagnostic, Reduction, Severity, TestFailure};
 
 /// Stable presentation formats supported by the standalone adapter.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -159,7 +159,7 @@ fn sarif(reduction: &Reduction) -> Value {
             let rule_id = diagnostic
                 .code
                 .clone()
-                .unwrap_or_else(|| "tokencompact.finding".to_owned());
+                .unwrap_or_else(|| "logcompact.finding".to_owned());
             if !rule_ids.contains(&rule_id) {
                 rule_ids.push(rule_id.clone());
                 rules.push(json!({
@@ -175,7 +175,7 @@ fn sarif(reduction: &Reduction) -> Value {
         "$schema": "https://json.schemastore.org/sarif-2.1.0.json",
         "version": "2.1.0",
         "runs": [{
-            "tool": {"driver": {"name": "tokencompact", "rules": rules}},
+            "tool": {"driver": {"name": "logcompact", "rules": rules}},
             "results": results,
             "properties": {
                 "truncated": reduction.truncated,
@@ -256,7 +256,7 @@ fn escape_property(value: &str) -> String {
 
 #[cfg(test)]
 mod tests {
-    use tokencompact_builtins::{DiagnosticClass, EvidenceQuality, Location, ReductionStats};
+    use logcompact_builtins::{DiagnosticClass, EvidenceQuality, Location, ReductionStats};
 
     use super::*;
 

@@ -76,6 +76,30 @@ dependencies = [
 ]
 
 [[package]]
+name = "logcompact-builtins"
+version = "0.2.0"
+dependencies = [
+ "logcompact-core",
+ "serde_json",
+]
+
+[[package]]
+name = "logcompact-core"
+version = "0.2.0"
+dependencies = [
+ "serde",
+ "serde_json",
+]
+
+[[package]]
+name = "logcompact-fuzz"
+version = "0.0.0"
+dependencies = [
+ "libfuzzer-sys",
+ "logcompact-builtins",
+]
+
+[[package]]
 name = "memchr"
 version = "2.8.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -163,30 +187,6 @@ dependencies = [
  "proc-macro2",
  "quote",
  "unicode-ident",
-]
-
-[[package]]
-name = "tokencompact-builtins"
-version = "0.1.0"
-dependencies = [
- "serde_json",
- "tokencompact-core",
-]
-
-[[package]]
-name = "tokencompact-core"
-version = "0.1.0"
-dependencies = [
- "serde",
- "serde_json",
-]
-
-[[package]]
-name = "tokencompact-fuzz"
-version = "0.0.0"
-dependencies = [
- "libfuzzer-sys",
- "tokencompact-builtins",
 ]
 
 [[package]]

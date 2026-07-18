@@ -4,8 +4,8 @@ use std::io::{self, Read, Write};
 use std::path::PathBuf;
 
 use clap::{Parser as ClapParser, ValueEnum};
-use tokencompact::{OutputFormat, has_severity, render};
-use tokencompact_builtins::{
+use logcompact::{OutputFormat, has_severity, render};
+use logcompact_builtins::{
     Budget, BuiltinParserOptions, EndReason, GenericRanker, Limits, OutputPolicy, PathMapper,
     Redactor, ReductionSession, Scope, ScopeKind, SessionOptions, Severity, Stream,
     builtin_parser_plan,
@@ -13,7 +13,7 @@ use tokencompact_builtins::{
 
 #[derive(ClapParser, Debug)]
 #[command(
-    name = "tokencompact",
+    name = "logcompact",
     version,
     about = "Compact noisy logs into bounded, token-efficient diagnostics"
 )]

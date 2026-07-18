@@ -1,5 +1,5 @@
 [package]
-name = "tokencompact-fuzz"
+name = "logcompact-fuzz"
 version = "0.0.0"
 publish = false
 edition = "2024"
@@ -10,11 +10,11 @@ cargo-fuzz = true
 
 [dependencies]
 libfuzzer-sys = "0.4"
-tokencompact-builtins = { path = "../crates/tokencompact-builtins" }
+logcompact-builtins = { path = "../crates/logcompact-builtins" }
 
 [[bin]]
-name = "tokencompact"
-path = "fuzz_targets/tokencompact.rs"
+name = "logcompact"
+path = "fuzz_targets/logcompact.rs"
 test = false
 doc = false
 bench = false

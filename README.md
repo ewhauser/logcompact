@@ -1,24 +1,32 @@
-# tokencompact
+# logcompact
 
 Keep the signal. Drop the tokens.
 
-`tokencompact` deterministically compacts compiler, test, lint, runtime, and
+`logcompact` deterministically compacts compiler, test, lint, runtime, and
 tool logs into bounded structured findings. It is designed for AI agents, CI
 annotations, and command-line workflows where raw logs are useful evidence but
 an expensive interface.
 
 ```console
-cargo install tokencompact
+cargo install logcompact
 
-some-command 2>&1 | tokencompact
-tokencompact build.log --format json --max-output-bytes 8192
-tokencompact test.log --format github --fail-on error
-tokencompact build.log --format sarif > diagnostics.sarif
+some-command 2>&1 | logcompact
+logcompact build.log --format json --max-output-bytes 8192
+logcompact test.log --format github --fail-on error
+logcompact build.log --format sarif > diagnostics.sarif
 ```
 
 The output limit is measured in serialized bytes. That is deterministic across
 machines and model providers; it is a stable proxy for token cost, not a claim
 to reproduce any particular tokenizer.
+
+## Renamed from tokencompact
+
+Version 0.2.0 renamed the project and all three packages from `tokencompact*`
+to `logcompact*`. Existing `tokencompact` 0.1.0 artifacts remain available for
+reproducible builds, but new development and releases use `logcompact`. See the
+[changelog](CHANGELOG.md#020---2026-07-18) for the exact dependency and import
+migration.
 
 ## Crates
 
@@ -26,11 +34,11 @@ The dependency direction is deliberately one-way:
 
 | Package | Responsibility |
 | --- | --- |
-| [`tokencompact-core`](crates/tokencompact-core) | Synchronous streaming state machine, scopes, parser lifecycle, provenance, redaction, ranking, and budgets |
-| [`tokencompact-builtins`](crates/tokencompact-builtins) | Fixed parser pack for common compiler, test, lint, and runtime output |
-| [`tokencompact`](crates/tokencompact) | Incremental stdin/file adapter and human, JSON, JSONL, SARIF, and GitHub output |
+| [`logcompact-core`](crates/logcompact-core) | Synchronous streaming state machine, scopes, parser lifecycle, provenance, redaction, ranking, and budgets |
+| [`logcompact-builtins`](crates/logcompact-builtins) | Fixed parser pack for common compiler, test, lint, and runtime output |
+| [`logcompact`](crates/logcompact) | Incremental stdin/file adapter and human, JSON, JSONL, SARIF, and GitHub output |
 
-`tokencompact-core` performs no I/O and knows nothing about CI providers,
+`logcompact-core` performs no I/O and knows nothing about CI providers,
 command runners, storage, or build systems. Applications can use the built-in
 pack, supply their own `Parser` implementations, or feed trusted structured
 findings into the same output-policy boundary.
@@ -61,7 +69,7 @@ Formats:
 - `sarif` for code-scanning integrations;
 - `github` for GitHub Actions workflow commands.
 
-Run `tokencompact --help` for limits, scope metadata, stream selection, and
+Run `logcompact --help` for limits, scope metadata, stream selection, and
 failure-threshold options.
 
 ## Development

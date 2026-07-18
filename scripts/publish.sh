@@ -11,7 +11,7 @@ import json
 import sys
 
 metadata = json.load(sys.stdin)
-print(next(package["version"] for package in metadata["packages"] if package["name"] == "tokencompact-core"))
+print(next(package["version"] for package in metadata["packages"] if package["name"] == "logcompact-core"))
 ')"
 release_ref="${GITHUB_REF_NAME:-}"
 if [[ -z "${release_ref}" ]]; then
@@ -43,8 +43,8 @@ publish_crate() {
   cargo publish --locked -p "${crate}"
 }
 
-publish_crate tokencompact-core
-wait_for_crate tokencompact-core
-publish_crate tokencompact-builtins
-wait_for_crate tokencompact-builtins
-publish_crate tokencompact
+publish_crate logcompact-core
+wait_for_crate logcompact-core
+publish_crate logcompact-builtins
+wait_for_crate logcompact-builtins
+publish_crate logcompact

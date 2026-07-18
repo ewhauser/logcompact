@@ -1,4 +1,4 @@
-use tokencompact_builtins::{
+use logcompact_builtins::{
     Budget, BuiltinParserOptions, EndReason, GenericRanker, NoPathMapping, NoRedaction,
     OutputPolicy, Reduction, ReductionOptions, ReductionSession, Scope, SessionOptions, Stream,
     TextInput, builtin_parser_plan, reduce,
