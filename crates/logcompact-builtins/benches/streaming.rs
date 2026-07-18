@@ -7,14 +7,18 @@ use logcompact_builtins::{
     builtin_parser_plan, reduce,
 };
 
-fn corpus(lines: usize, matches: bool) -> Vec<u8> {
+fn corpus(lines: usize, match_every: Option<usize>, repeated: bool) -> Vec<u8> {
     let mut output = String::new();
     for index in 0..lines {
-        if matches && index % 1_000 == 999 {
-            output.push_str(&format!(
-                "src/file{index}.cc:{}:7: error: missing value {index}\n",
-                index + 1
-            ));
+        if match_every.is_some_and(|interval| index % interval == interval - 1) {
+            if repeated {
+                output.push_str("src/repeated.cc:42:7: error: missing repeated value\n");
+            } else {
+                output.push_str(&format!(
+                    "src/file{index}.cc:{}:7: error: missing value {index}\n",
+                    index + 1
+                ));
+            }
         } else {
             output.push_str(&format!("[{index}] ordinary command progress output\n"));
         }
@@ -45,8 +49,10 @@ fn stream(input: &[u8], chunk_size: usize) {
 fn generic_reducers(criterion: &mut Criterion) {
     let mut group = criterion.benchmark_group("generic_reducers");
     for (name, input) in [
-        ("no-match-tail", corpus(25_000, false)),
-        ("mixed-tail", corpus(25_000, true)),
+        ("no-match-tail", corpus(25_000, None, false)),
+        ("mixed-tail", corpus(25_000, Some(1_000), false)),
+        ("match-heavy", corpus(25_000, Some(2), false)),
+        ("repeated-diagnostic", corpus(25_000, Some(2), true)),
     ] {
         group.throughput(Throughput::Bytes(input.len() as u64));
         group.bench_function(format!("batch/{name}"), |bencher| {
@@ -69,6 +75,9 @@ fn generic_reducers(criterion: &mut Criterion) {
         });
         group.bench_function(format!("stream-1k/{name}"), |bencher| {
             bencher.iter(|| stream(&input, 1024));
+        });
+        group.bench_function(format!("stream-7b/{name}"), |bencher| {
+            bencher.iter(|| stream(&input, 7));
         });
     }
     group.finish();

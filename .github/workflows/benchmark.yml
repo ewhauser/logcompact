@@ -1,0 +1,35 @@
+name: Benchmarks
+
+on:
+  schedule:
+    - cron: "41 10 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: benchmarks-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  criterion:
+    name: criterion
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - name: Install Rust toolchain
+        run: rustup toolchain install 1.94.1 --profile minimal
+      - name: Run reusable reducer benchmarks
+        run: cargo bench --workspace --all-features --locked
+      - name: Upload Criterion reports
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: criterion-${{ github.sha }}
+          path: target/criterion
+          if-no-files-found: warn
+          retention-days: 30
