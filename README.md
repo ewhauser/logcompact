@@ -74,7 +74,8 @@ make fuzz-smoke
 make package-check
 ```
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for contribution rules and
+See [BENCHMARKS.md](BENCHMARKS.md) for benchmark ownership and commands,
+[CONTRIBUTING.md](CONTRIBUTING.md) for contribution rules, and
 [RELEASING.md](RELEASING.md) for the dependency-ordered crates.io process.
 
 Licensed under the [MIT License](LICENSE).

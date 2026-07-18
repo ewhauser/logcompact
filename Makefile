@@ -1,4 +1,4 @@
-.PHONY: build test fmt lint doc boundary check package-check fuzz-smoke bench
+.PHONY: build test fmt lint doc boundary check package-check fuzz-smoke bench bench-core bench-builtins
 
 build:
 	cargo build --workspace --all-features --locked
@@ -30,4 +30,10 @@ fuzz-smoke:
 	rustup run nightly cargo fuzz run logcompact -- -max_total_time=10
 
 bench:
-	cargo bench -p logcompact-builtins --bench streaming
+	cargo bench --workspace --all-features --locked
+
+bench-core:
+	cargo bench -p logcompact-core --bench core --locked
+
+bench-builtins:
+	cargo bench -p logcompact-builtins --bench streaming --all-features --locked

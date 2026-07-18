@@ -27,6 +27,8 @@ jobs:
       - run: cargo fmt --all -- --check
       - run: python3 scripts/check-boundary.py
       - run: cargo clippy --workspace --all-targets --all-features --locked -- -D warnings
+      - name: Compile benchmarks
+        run: cargo bench --workspace --all-features --locked --no-run
       - run: RUSTDOCFLAGS="-D warnings" cargo doc --workspace --all-features --no-deps --locked
       - run: make package-check
 
