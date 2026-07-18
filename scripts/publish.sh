@@ -25,7 +25,7 @@ fi
 wait_for_crate() {
   local crate="$1"
   for _ in {1..30}; do
-    if cargo info "${crate}@${version}" >/dev/null 2>&1; then
+    if cargo info --registry crates-io "${crate}@${version}" >/dev/null 2>&1; then
       return 0
     fi
     sleep 10
@@ -34,8 +34,17 @@ wait_for_crate() {
   return 1
 }
 
-cargo publish --locked -p tokencompact-core
+publish_crate() {
+  local crate="$1"
+  if cargo info --registry crates-io "${crate}@${version}" >/dev/null 2>&1; then
+    echo "${crate}@${version} is already published; skipping"
+    return 0
+  fi
+  cargo publish --locked -p "${crate}"
+}
+
+publish_crate tokencompact-core
 wait_for_crate tokencompact-core
-cargo publish --locked -p tokencompact-builtins
+publish_crate tokencompact-builtins
 wait_for_crate tokencompact-builtins
-cargo publish --locked -p tokencompact
+publish_crate tokencompact

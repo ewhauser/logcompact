@@ -18,8 +18,12 @@ the first release:
 1. Add an environment named `crates-io` to the GitHub repository.
 2. Add a short-lived crates.io API token as the environment secret
    `CARGO_REGISTRY_TOKEN`.
-3. Run the `Publish crates` workflow from the version tag or commit to publish.
+3. Run the `Publish crates` workflow from the exact `vX.Y.Z` version tag.
 4. Remove the token after the workflow completes.
+
+The publisher is resumable. If a run stops after publishing only part of the
+workspace, rerun it from the same tag; already-published package versions are
+verified against crates.io and skipped.
 
 ## Trusted publishing
 
