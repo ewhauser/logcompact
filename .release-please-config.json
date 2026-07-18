@@ -1,0 +1,35 @@
+{
+  "packages": {
+    ".": {
+      "release-type": "simple",
+      "package-name": "logcompact",
+      "changelog-path": "CHANGELOG.md",
+      "version-file": "version.txt",
+      "include-component-in-tag": false,
+      "include-v-in-tag": true,
+      "bump-minor-pre-major": true,
+      "extra-files": [
+        {
+          "type": "toml",
+          "path": "Cargo.toml",
+          "jsonpath": "$.workspace.package.version"
+        },
+        {
+          "type": "toml",
+          "path": "Cargo.toml",
+          "jsonpath": "$['workspace']['dependencies']['logcompact-core']['version']"
+        },
+        {
+          "type": "toml",
+          "path": "Cargo.toml",
+          "jsonpath": "$['workspace']['dependencies']['logcompact-builtins']['version']"
+        },
+        {
+          "type": "toml",
+          "path": "Cargo.lock",
+          "jsonpath": "$.package[?(@.name.value==\"logcompact\" || @.name.value==\"logcompact-builtins\" || @.name.value==\"logcompact-core\")].version"
+        }
+      ]
+    }
+  }
+}

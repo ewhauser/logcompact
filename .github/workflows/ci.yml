@@ -26,6 +26,7 @@ jobs:
         run: rustup toolchain install 1.94.1 --profile minimal --component clippy,rustfmt
       - run: cargo fmt --all -- --check
       - run: python3 scripts/check-boundary.py
+      - run: python3 scripts/check-release-please-config.py
       - run: cargo clippy --workspace --all-targets --all-features --locked -- -D warnings
       - name: Compile benchmarks
         run: cargo bench --workspace --all-features --locked --no-run
