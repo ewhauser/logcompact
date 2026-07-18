@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.0](https://github.com/ewhauser/logcompact/compare/v0.2.0...v0.3.0) (2026-07-18)
+
+
+### Features
+
+* add customizable problem matchers ([#6](https://github.com/ewhauser/logcompact/issues/6)) ([d579cda](https://github.com/ewhauser/logcompact/commit/d579cda75dc5a383769ec77d2794a1d53b94b31f))
+
+
+### Performance Improvements
+
+* establish reusable benchmark ownership ([#5](https://github.com/ewhauser/logcompact/issues/5)) ([3aba772](https://github.com/ewhauser/logcompact/commit/3aba772cf6a3ca696d01bbe8ac7292f08170e9f3))
+
 ## [0.2.0] - 2026-07-18
 
 ### Changed
