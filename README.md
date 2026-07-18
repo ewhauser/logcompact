@@ -38,7 +38,10 @@ their own `Parser` implementations, or feed trusted structured findings into
 the same output-policy boundary.
 
 See [PROBLEM_MATCHERS.md](PROBLEM_MATCHERS.md) for the supported matcher
-contract, safety bounds, CLI usage, and deliberate compatibility limits.
+contract, configuration examples, precedence with built-ins, performance
+guidance, safety bounds, and deliberate compatibility limits. CLI matchers
+extend the built-ins: precise custom matches suppress generic fallbacks, while
+recognized built-in diagnostics remain available as separate evidence.
 
 ## Deterministic by construction
 

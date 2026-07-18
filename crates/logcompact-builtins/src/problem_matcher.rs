@@ -1029,6 +1029,25 @@ mod tests {
         session.finish()
     }
 
+    fn reduce_with_builtins(definition: &[u8], input: &[u8]) -> Reduction {
+        let mut registry = ProblemMatcherRegistry::default();
+        registry.add_json(definition).unwrap();
+        let mut plan = crate::builtin_parser_plan(crate::BuiltinParserOptions::default());
+        plan.push(registry.into_parser()).unwrap();
+        let mut session = ReductionSession::new(
+            plan,
+            SessionOptions {
+                budget: Budget::unbounded(),
+                ..SessionOptions::default()
+            },
+            OutputPolicy::new(&NoRedaction, &NoPathMapping, &GenericRanker),
+        );
+        session.begin_scope(Scope::step("matcher"));
+        session.push_chunk("matcher", Stream::Stderr, input);
+        session.end_scope("matcher", EndReason::Complete);
+        session.finish()
+    }
+
     #[test]
     fn parses_single_line_github_definition_with_ranges() {
         let definition = br#"{
@@ -1130,6 +1149,48 @@ mod tests {
         session.push_chunk("matcher", Stream::Stderr, b"file.rs:1:2: message\n");
         session.end_scope("matcher", EndReason::Complete);
         assert_eq!(session.finish().diagnostics[0].severity, Severity::Warning);
+    }
+
+    #[test]
+    fn custom_matchers_suppress_fallbacks_but_not_recognized_builtins() {
+        let fallback_definition = br#"{
+            "problemMatcher": [{
+                "owner": "custom",
+                "pattern": {
+                    "regexp": "^CUSTOM (.+):(\\d+):(\\d+): error: (.+)$",
+                    "file": 1, "line": 2, "column": 3, "message": 4
+                }
+            }]
+        }"#;
+        let fallback = reduce_with_builtins(
+            fallback_definition,
+            b"CUSTOM src/main.dsl:4:2: error: broken widget\n",
+        );
+        assert_eq!(fallback.diagnostics.len(), 1);
+        assert_eq!(
+            fallback.diagnostics[0]
+                .provenance
+                .as_ref()
+                .unwrap()
+                .parser
+                .as_deref(),
+            Some("problem-matcher.v1")
+        );
+
+        let go_definition = br#"{
+            "problemMatcher": [{
+                "owner": "custom-go",
+                "pattern": {
+                    "regexp": "^(.+):(\\d+):(\\d+): (.+)$",
+                    "file": 1, "line": 2, "column": 3, "message": 4
+                }
+            }]
+        }"#;
+        let recognized =
+            reduce_with_builtins(go_definition, b"src/main.go:12:4: undefined: total\n");
+        assert_eq!(recognized.diagnostics.len(), 2);
+        assert_eq!(recognized.diagnostics[0].class, DiagnosticClass::Compiler);
+        assert_eq!(recognized.diagnostics[1].class, DiagnosticClass::Tool);
     }
 
     #[test]
