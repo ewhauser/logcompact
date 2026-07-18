@@ -98,6 +98,11 @@ pub struct Emitter<'a> {
 }
 
 impl Emitter<'_> {
+    /// Records a finding that a bounded parser could not retain or emit.
+    pub fn candidate_dropped(&mut self) {
+        self.store.dropped = self.store.dropped.saturating_add(1);
+    }
+
     pub fn diagnostic(&mut self, mut diagnostic: Diagnostic) {
         if self
             .store

@@ -585,6 +585,8 @@ fn go_test_location(line: &str) -> Option<(Location, Option<&str>, bool)> {
             path: bounded_text(&compact_test_path(path), MAX_FAILURE_DETAIL_BYTES),
             line: Some(line_number),
             column,
+            end_line: None,
+            end_column: None,
         },
         message,
         stack_frame,
@@ -648,6 +650,8 @@ fn gtest_failure_location(line: &str) -> Option<Option<Location>> {
             path: compact_test_path(path),
             line: Some(line_number),
             column: None,
+            end_line: None,
+            end_column: None,
         })
     })
 }
@@ -702,6 +706,8 @@ fn parse_location(value: &str) -> Option<Location> {
         path: bounded_text(path, MAX_FAILURE_DETAIL_BYTES),
         line: Some(line),
         column: Some(column),
+        end_line: None,
+        end_column: None,
     })
 }
 
@@ -791,6 +797,8 @@ mod tests {
                 path: "src/test.rs".into(),
                 line: Some(101),
                 column: Some(9),
+                end_line: None,
+                end_column: None,
             })
         );
         assert!(!failures[0].message.contains("successful_root_cause_test"));
@@ -834,6 +842,8 @@ mod tests {
                 path: "mcp/cpp_fixture/assertion_failure_test.cc".into(),
                 line: Some(8),
                 column: None,
+                end_line: None,
+                end_column: None,
             })
         );
     }

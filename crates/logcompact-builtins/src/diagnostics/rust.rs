@@ -90,6 +90,8 @@ fn parse_location(line: &str) -> Option<Location> {
         path: compact_path(path),
         line: Some(line),
         column: Some(column),
+        end_line: None,
+        end_column: None,
     })
 }
 
@@ -135,6 +137,8 @@ error: aborting due to 1 previous error
                 path: "cases/type_mismatch.rs".to_owned(),
                 line: Some(2),
                 column: Some(28),
+                end_line: None,
+                end_column: None,
             })
         );
     }

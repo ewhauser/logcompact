@@ -10,7 +10,7 @@ repositories.
 | Suite | Coverage | Command |
 | --- | --- | --- |
 | Core | Exact deduplication at 100, 10,000, and 100,000 repeated or unique lines; CR, LF, and CRLF framing with 7-byte, 1 KiB, and 64 KiB chunks | `make bench-core` |
-| Built-ins | No-match, mixed, match-heavy, and repeated diagnostics through batch and streaming reduction | `make bench-builtins` |
+| Built-ins | No-match, mixed, match-heavy, and repeated diagnostics through batch and streaming reduction; matcher-only, built-ins-only, and combined problem-matcher plans | `make bench-builtins` |
 
 `make bench` runs both suites. Pull-request CI compiles benchmarks without
 running measurements. A scheduled and manually dispatched GitHub Actions

@@ -2,7 +2,10 @@ use crate::{Diagnostic, DiagnosticClass, Severity};
 
 use crate::deduplicate_lines;
 
-use super::{LineDiagnosticReducer, TextDiagnosticContext, cpp, java, javascript, python, rust};
+use super::{
+    BuiltinMatcherOverrides, LineDiagnosticReducer, TextDiagnosticContext, cpp, java, javascript,
+    python, rust,
+};
 
 pub(super) fn reduce_python(input: &str, context: &mut TextDiagnosticContext<'_>) {
     let mut parser = python::PythonDiagnosticParser::default();
@@ -21,6 +24,7 @@ pub(super) fn reduce_lines(
     context: &mut TextDiagnosticContext<'_>,
     registry: &[LineDiagnosticReducer],
     include_fallbacks: bool,
+    overrides: BuiltinMatcherOverrides,
 ) {
     let candidates = deduplicate_lines(input);
     for (line, count) in candidates {
@@ -33,6 +37,9 @@ pub(super) fn reduce_lines(
         let mut parsed = false;
         for reducer in registry {
             debug_assert!(!reducer.name.is_empty());
+            if overrides.contains(reducer.name) {
+                continue;
+            }
             if !(reducer.enabled)(false) {
                 continue;
             }

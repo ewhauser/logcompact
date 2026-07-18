@@ -23,8 +23,10 @@ logcompact-core = { path = "crates/logcompact-core", version = "0.2.0" }
 logcompact-builtins = { path = "crates/logcompact-builtins", version = "0.2.0" }
 clap = { version = "4", features = ["derive"] }
 criterion = "0.8"
+regex = "1"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
+tempfile = "3"
 
 [profile.release]
 lto = "thin"

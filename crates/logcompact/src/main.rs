@@ -7,8 +7,9 @@ use clap::{Parser as ClapParser, ValueEnum};
 use logcompact::{OutputFormat, has_severity, render};
 use logcompact_builtins::{
     Budget, BuiltinParserOptions, EndReason, GenericRanker, Limits, OutputPolicy, PathMapper,
-    Redactor, ReductionSession, Scope, ScopeKind, SessionOptions, Severity, Stream,
-    builtin_parser_plan,
+    ProblemMatcherLimits, ProblemMatcherRegistry, Redactor, ReductionSession, Scope, ScopeKind,
+    SessionOptions, Severity, Stream, builtin_parser_plan,
+    builtin_parser_plan_with_problem_matchers,
 };
 
 #[derive(ClapParser, Debug)]
@@ -53,6 +54,10 @@ struct Args {
     /// Path prefix to remove after parsing. Repeat for CI workspace variants.
     #[arg(long)]
     strip_prefix: Vec<String>,
+
+    /// GitHub/VS Code matcher JSON. Later owners replace earlier or same-owner built-ins.
+    #[arg(long, value_name = "FILE")]
+    problem_matcher: Vec<PathBuf>,
 
     /// Exit with status 1 when a finding at this severity or higher exists.
     #[arg(long, value_enum)]
@@ -124,11 +129,16 @@ fn main() -> Result<(), Box<dyn Error>> {
     let redactor = LiteralRedactor(args.redact_literal.clone());
     let path_mapper = PrefixPathMapper(args.strip_prefix.clone());
     let ranker = GenericRanker;
+    let parser_options = BuiltinParserOptions {
+        max_buffered_scope_bytes: args.max_input_bytes,
+        ..BuiltinParserOptions::default()
+    };
+    let parser_plan = load_problem_matchers(&args.problem_matcher)?.map_or_else(
+        || builtin_parser_plan(parser_options),
+        |registry| builtin_parser_plan_with_problem_matchers(parser_options, registry),
+    );
     let mut session = ReductionSession::new(
-        builtin_parser_plan(BuiltinParserOptions {
-            max_buffered_scope_bytes: args.max_input_bytes,
-            ..BuiltinParserOptions::default()
-        }),
+        parser_plan,
         SessionOptions {
             budget: Budget {
                 max_bytes: args.max_output_bytes,
@@ -200,6 +210,34 @@ fn main() -> Result<(), Box<dyn Error>> {
         std::process::exit(1);
     }
     Ok(())
+}
+
+fn load_problem_matchers(
+    paths: &[PathBuf],
+) -> Result<Option<ProblemMatcherRegistry>, Box<dyn Error>> {
+    if paths.is_empty() {
+        return Ok(None);
+    }
+    let limits = ProblemMatcherLimits::default();
+    if paths.len() > limits.max_matchers {
+        return Err(format!(
+            "{} problem matcher files were supplied; maximum is {}",
+            paths.len(),
+            limits.max_matchers
+        )
+        .into());
+    }
+    let mut registry = ProblemMatcherRegistry::new(limits);
+    for path in paths {
+        let mut definition = Vec::new();
+        File::open(path)?
+            .take((limits.max_document_bytes as u64).saturating_add(1))
+            .read_to_end(&mut definition)?;
+        registry.add_json(&definition).map_err(|error| {
+            format!("could not load problem matcher {}: {error}", path.display())
+        })?;
+    }
+    Ok(Some(registry))
 }
 
 fn stream_reader(

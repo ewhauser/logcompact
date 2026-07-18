@@ -90,6 +90,8 @@ pub(super) fn parse_compiler_diagnostic(line: &str) -> Option<Diagnostic> {
             path: compact_path(path),
             line: Some(line_number),
             column,
+            end_line: None,
+            end_column: None,
         }),
         quality: crate::EvidenceQuality::Located,
         repetition_count: 1,
@@ -230,6 +232,8 @@ fn parse_stack_frame(line: &str) -> Option<(Location, bool)> {
             path,
             line: Some(line_number),
             column: None,
+            end_line: None,
+            end_column: None,
         },
         framework_frame,
     ))

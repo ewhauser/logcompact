@@ -10,7 +10,7 @@ The repository develops three publishable packages together:
 | Package | Responsibility |
 | --- | --- |
 | `logcompact-core` | Streaming scopes, parser lifecycle, provenance, policies, bounds, and finalization |
-| `logcompact-builtins` | Fixed built-in language and test-framework parser pack plus a batch compatibility API |
+| `logcompact-builtins` | Fixed language/test parser pack, bounded problem matcher compiler, and batch compatibility API |
 | `logcompact` | Incremental file/stdin input and human, JSON, JSONL, SARIF, and GitHub presentation |
 
 ## Batch API
@@ -69,6 +69,41 @@ The generic pack does not understand provider workspaces, action mnemonics,
 build-event protocols, or provider-specific status messages. Those rules belong
 in downstream adapters, which can feed mapped findings through the same
 output-policy boundary.
+
+## Problem matcher API
+
+Self-contained GitHub Actions and inline VS Code problem matcher definitions
+can be compiled before input begins and appended to a parser plan:
+
+```rust
+use logcompact_builtins::{
+    BuiltinParserOptions, ProblemMatcherRegistry,
+    builtin_parser_plan_with_problem_matchers,
+};
+
+let mut registry = ProblemMatcherRegistry::default();
+registry.add_json(br#"{
+    "problemMatcher": [{
+        "owner": "compiler",
+        "pattern": {
+            "regexp": "^(.+):(\\d+):(\\d+): (error|warning): (.+)$",
+            "file": 1, "line": 2, "column": 3,
+            "severity": 4, "message": 5
+        }
+    }]
+}"#).expect("the matcher definition should compile");
+
+let plan = builtin_parser_plan_with_problem_matchers(
+    BuiltinParserOptions::default(),
+    registry,
+);
+```
+
+The registry performs no I/O. It validates all definitions and compiles their
+bounded state machines atomically. A custom owner matching a stable built-in
+owner replaces that built-in; other owners extend the plan. See the
+repository's [`PROBLEM_MATCHERS.md`](../../PROBLEM_MATCHERS.md) for
+compatibility details.
 
 Run `make boundary` from the repository root to verify that no provider-specific
 semantics or workspace-internal dependencies have leaked into these packages.

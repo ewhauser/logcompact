@@ -7,6 +7,7 @@
 mod diagnostics;
 mod finalize;
 mod model;
+mod problem_matcher;
 mod redaction;
 mod streaming;
 mod test_failures;
@@ -14,8 +15,8 @@ mod test_log;
 mod text;
 
 pub use diagnostics::{
-    JavaScriptTestDiagnosticParser, JavaTestDiagnosticParser, PythonDiagnosticParser,
-    parse_go_diagnostic,
+    BUILTIN_MATCHER_OWNERS, BuiltinMatcherOverrides, JavaScriptTestDiagnosticParser,
+    JavaTestDiagnosticParser, PythonDiagnosticParser, parse_go_diagnostic,
 };
 pub use logcompact_core::{
     Emitter, GenericRanker, OutputPolicy, Parser, ParserPlan, ParserPlanError, RankKey, Ranker,
@@ -26,11 +27,28 @@ pub use model::{
     Location, LogLine, Provenance, Reduction, ReductionOptions, ReductionStats, Scope, ScopeKind,
     SessionOptions, Severity, Stream, TestFailure, TextInput,
 };
+pub use problem_matcher::{
+    ProblemMatcherError, ProblemMatcherLimits, ProblemMatcherParser, ProblemMatcherRegistry,
+};
 pub use redaction::{NoPathMapping, NoRedaction, PathMapper, Redactor};
 pub use streaming::{BuiltinDiagnosticParser, BuiltinParserOptions, builtin_parser_plan};
 pub use test_failures::{TestFailureAccumulator, TestFailureEvidence};
 pub use test_log::{TestLogReducer, TestLogReduction};
 pub use text::{deduplicate_lines, normalize_terminal_text};
+
+/// Builds the default parser plan while replacing built-ins whose stable owner
+/// is also registered by a custom problem matcher.
+#[must_use]
+pub fn builtin_parser_plan_with_problem_matchers(
+    mut options: BuiltinParserOptions,
+    registry: ProblemMatcherRegistry,
+) -> ParserPlan {
+    options.overrides = options.overrides.union(registry.builtin_overrides());
+    let mut plan = builtin_parser_plan(options);
+    plan.push(registry.into_parser())
+        .expect("the problem matcher parser identifier is unique in the built-in plan");
+    plan
+}
 
 /// Reduces one or more text inputs with deterministic parser and input order.
 #[must_use]
@@ -56,7 +74,12 @@ pub fn reduce_with_policy(
     let mut diagnostics = Vec::new();
     for input in inputs {
         let start = diagnostics.len();
-        diagnostics::add_text_diagnostics(input.text, &mut diagnostics, options.fallback);
+        diagnostics::add_text_diagnostics(
+            input.text,
+            &mut diagnostics,
+            options.fallback,
+            BuiltinMatcherOverrides::default(),
+        );
         for diagnostic in &mut diagnostics[start..] {
             diagnostic.provenance = input.provenance.cloned();
             if diagnostic.location.is_some() && diagnostic.quality == EvidenceQuality::Structured {

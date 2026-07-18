@@ -64,6 +64,8 @@ pub(super) fn parse_location(line: &str) -> Option<Location> {
         path: compact_path(path),
         line: Some(line_number),
         column: None,
+        end_line: None,
+        end_column: None,
     })
 }
 

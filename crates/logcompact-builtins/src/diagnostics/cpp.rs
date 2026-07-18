@@ -32,6 +32,8 @@ pub(crate) fn parse_diagnostic(line: &str) -> Option<Diagnostic> {
             path: compact_path(path),
             line: Some(line_number),
             column,
+            end_line: None,
+            end_column: None,
         }),
         quality: crate::EvidenceQuality::Located,
         repetition_count: 1,
@@ -193,6 +195,8 @@ fn parse_linker_location(prefix: &str) -> Option<Location> {
         path: compact_path(path),
         line: Some(line_number),
         column: None,
+        end_line: None,
+        end_column: None,
     })
 }
 

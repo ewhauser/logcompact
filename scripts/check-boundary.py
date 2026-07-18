@@ -13,7 +13,7 @@ CRATES = ROOT / "crates"
 
 EXPECTED_DEPENDENCIES = {
     "logcompact-core": {"serde", "serde_json"},
-    "logcompact-builtins": {"logcompact-core", "serde_json"},
+    "logcompact-builtins": {"logcompact-core", "regex", "serde", "serde_json"},
     "logcompact": {"clap", "logcompact-builtins", "serde_json"},
 }
 

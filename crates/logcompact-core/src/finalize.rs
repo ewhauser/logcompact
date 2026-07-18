@@ -224,6 +224,8 @@ mod tests {
                 path: path.to_owned(),
                 line: Some(1),
                 column: None,
+                end_line: None,
+                end_column: None,
             }),
             provenance: Some(Provenance::new("stderr").with_scope(&scope)),
             quality: EvidenceQuality::Located,
