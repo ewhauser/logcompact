@@ -1,0 +1,13 @@
+output: |
+  Caused by: java.lang.IllegalArgumentException: negative total
+      at com.example.Invoice.total(Invoice.java:51)
+assertion:
+  diagnostics:
+    - severity: error
+      class: test
+      message: "java.lang.IllegalArgumentException: negative total"
+      location:
+        path: com/example/Invoice.java
+        line: 51
+      quality: located
+      repetition_count: 1

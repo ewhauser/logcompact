@@ -1,6 +1,6 @@
 use crate::{Diagnostic, DiagnosticClass, Location, Severity};
 
-use super::common::normalize_path;
+use super::super::common::normalize_path;
 
 /// Stateful extractor for standard Python traceback and syntax-error output.
 ///
@@ -43,7 +43,7 @@ impl PythonDiagnosticParser {
     }
 }
 
-pub(super) fn parse_location(line: &str) -> Option<Location> {
+pub(crate) fn parse_location(line: &str) -> Option<Location> {
     let marker = "File \"";
     let start = line.find(marker)? + marker.len();
     let remainder = &line[start..];
@@ -69,7 +69,7 @@ pub(super) fn parse_location(line: &str) -> Option<Location> {
     })
 }
 
-pub(super) fn exception_message(line: &str) -> Option<&str> {
+pub(crate) fn exception_message(line: &str) -> Option<&str> {
     let mut line = line.trim();
     if let Some(remainder) = line.strip_prefix('E')
         && remainder.chars().next().is_some_and(char::is_whitespace)

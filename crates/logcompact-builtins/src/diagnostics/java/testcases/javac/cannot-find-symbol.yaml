@@ -1,0 +1,13 @@
+output: |
+  src/Main.java:12: error: cannot find symbol
+    symbol: variable total
+assertion:
+  diagnostics:
+    - severity: error
+      class: compiler
+      message: "cannot find symbol: variable total"
+      location:
+        path: src/Main.java
+        line: 12
+      quality: located
+      repetition_count: 1

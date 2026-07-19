@@ -1,0 +1,13 @@
+output: |
+  src/main.go:9:2: warning: unreachable code
+assertion:
+  diagnostics:
+    - severity: warning
+      class: compiler
+      message: "warning: unreachable code"
+      location:
+        path: src/main.go
+        line: 9
+        column: 2
+      quality: located
+      repetition_count: 1

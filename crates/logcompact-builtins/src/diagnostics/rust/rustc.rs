@@ -1,10 +1,10 @@
 use crate::{Diagnostic, DiagnosticClass, Location, Severity};
 
-use super::common::{bounded_text, normalize_path};
+use super::super::common::{bounded_text, normalize_path};
 
 const MAX_MESSAGE_BYTES: usize = 1_024;
 
-pub(super) fn reduce(input: &str, diagnostics: &mut Vec<Diagnostic>) {
+pub(crate) fn reduce(input: &str, diagnostics: &mut Vec<Diagnostic>) {
     let mut pending = None;
     for line in input.lines() {
         if let Some(message) = parse_error_header(line) {
@@ -67,7 +67,7 @@ impl PendingDiagnostic {
     }
 }
 
-pub(super) fn parse_error_header(line: &str) -> Option<String> {
+pub(crate) fn parse_error_header(line: &str) -> Option<String> {
     let line = line.trim().strip_prefix("ERROR: ").unwrap_or(line.trim());
     let remainder = line.strip_prefix("error[")?;
     let (code, message) = remainder.split_once("]: ")?;

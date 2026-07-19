@@ -1,6 +1,6 @@
 use crate::{Diagnostic, DiagnosticClass, Location, Severity};
 
-use super::javascript::compact_path;
+use super::super::javascript::compact_path;
 
 pub(crate) fn parse_diagnostic(line: &str) -> Option<Diagnostic> {
     let line = line

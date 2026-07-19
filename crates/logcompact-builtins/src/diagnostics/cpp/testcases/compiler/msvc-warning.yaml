@@ -1,0 +1,13 @@
+output: |
+  src\invoice.cpp(9,17): warning C4996: legacy_total is deprecated
+assertion:
+  diagnostics:
+    - severity: warning
+      class: compiler
+      message: "C4996: legacy_total is deprecated"
+      location:
+        path: src/invoice.cpp
+        line: 9
+        column: 17
+      quality: located
+      repetition_count: 1

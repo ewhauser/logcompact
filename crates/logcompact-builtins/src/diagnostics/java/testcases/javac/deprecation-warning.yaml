@@ -1,0 +1,12 @@
+output: |
+  src/Main.java:8: warning: [deprecation] oldTotal() has been deprecated
+assertion:
+  diagnostics:
+    - severity: warning
+      class: compiler
+      message: "[deprecation] oldTotal() has been deprecated"
+      location:
+        path: src/Main.java
+        line: 8
+      quality: located
+      repetition_count: 1

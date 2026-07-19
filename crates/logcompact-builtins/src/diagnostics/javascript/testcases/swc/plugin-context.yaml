@@ -1,0 +1,23 @@
+output: |2
+  failed to process js file
+    x Unexpected token
+     ,-[src/plugin.ts:4:7]
+   4 | const = value
+     :       ^
+     `----
+assertion:
+  diagnostics:
+    - severity: error
+      class: compiler
+      code: swc.parser
+      message: |-
+        Unexpected token
+        SWC context: failed to process js file
+        4 | const = value
+        :       ^
+      location:
+        path: src/plugin.ts
+        line: 4
+        column: 7
+      quality: located
+      repetition_count: 1

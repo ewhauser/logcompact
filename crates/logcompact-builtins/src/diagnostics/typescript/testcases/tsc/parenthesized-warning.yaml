@@ -1,0 +1,13 @@
+output: |
+  src/app.ts(4,3): warning TS6133: 'total' is declared but its value is never read.
+assertion:
+  diagnostics:
+    - severity: warning
+      class: compiler
+      message: "TS6133: 'total' is declared but its value is never read."
+      location:
+        path: src/app.ts
+        line: 4
+        column: 3
+      quality: located
+      repetition_count: 1

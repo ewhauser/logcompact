@@ -1,13 +1,10 @@
 use crate::{Diagnostic, DiagnosticClass, Location, Severity};
 
-use super::common::{normalize_path, split_u32_prefix};
+use super::super::common::{normalize_path, split_u32_prefix};
 
-/// Parses the standard Go compiler location form without depending on a
-/// particular diagnostic message or language setting.
-#[must_use]
-pub fn parse_diagnostic(line: &str) -> Option<Diagnostic> {
-    let marker = line.rfind(".go:")?;
-    let path_end = marker + ".go".len();
+pub(crate) fn parse_diagnostic(line: &str) -> Option<Diagnostic> {
+    let marker = line.rfind(".proto:")?;
+    let path_end = marker + ".proto".len();
     let path = line[..path_end]
         .trim()
         .strip_prefix("ERROR: ")
@@ -18,15 +15,18 @@ pub fn parse_diagnostic(line: &str) -> Option<Diagnostic> {
             (Some(column), message)
         });
     let message = message.trim();
+    let (severity, message) = if let Some(message) = message.strip_prefix("warning:") {
+        (Severity::Warning, message.trim())
+    } else if let Some(message) = message.strip_prefix("error:") {
+        (Severity::Error, message.trim())
+    } else {
+        (Severity::Error, message)
+    };
     if message.is_empty() {
         return None;
     }
     Some(Diagnostic {
-        severity: if message.to_ascii_lowercase().contains("warning:") {
-            Severity::Warning
-        } else {
-            Severity::Error
-        },
+        severity,
         class: DiagnosticClass::Compiler,
         code: None,
         provenance: None,

@@ -1,0 +1,14 @@
+output: |
+  src/invoice.test.ts:14:9
+  RangeError: invalid total
+assertion:
+  diagnostics:
+    - severity: error
+      class: test
+      message: "RangeError: invalid total"
+      location:
+        path: src/invoice.test.ts
+        line: 14
+        column: 9
+      quality: located
+      repetition_count: 1

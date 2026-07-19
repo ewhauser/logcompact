@@ -1,0 +1,13 @@
+output: |
+  src/schema.proto:18:7: "InvoiceTotal" is not defined.
+assertion:
+  diagnostics:
+    - severity: error
+      class: compiler
+      message: "\"InvoiceTotal\" is not defined."
+      location:
+        path: src/schema.proto
+        line: 18
+        column: 7
+      quality: located
+      repetition_count: 1

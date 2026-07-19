@@ -1,0 +1,15 @@
+output: |
+  Traceback (most recent call last):
+    File "src/pricing.py", line 19, in total
+      raise ValueError("unsupported currency")
+  ValueError: unsupported currency
+assertion:
+  diagnostics:
+    - severity: error
+      class: compiler
+      message: "ValueError: unsupported currency"
+      location:
+        path: src/pricing.py
+        line: 19
+      quality: located
+      repetition_count: 1

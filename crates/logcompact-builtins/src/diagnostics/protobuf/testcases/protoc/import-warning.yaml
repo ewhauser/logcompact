@@ -1,0 +1,13 @@
+output: |
+  src/schema.proto:4:2: warning: Import common.proto is unused.
+assertion:
+  diagnostics:
+    - severity: warning
+      class: compiler
+      message: "Import common.proto is unused."
+      location:
+        path: src/schema.proto
+        line: 4
+        column: 2
+      quality: located
+      repetition_count: 1
