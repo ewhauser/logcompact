@@ -20,6 +20,8 @@ assert package_config["version-file"] == "version.txt"
 assert package_config["include-component-in-tag"] is False
 assert package_config["include-v-in-tag"] is True
 assert package_config["bump-minor-pre-major"] is True
+assert package_config["draft"] is True
+assert package_config["force-tag-creation"] is True
 assert (root / "version.txt").read_text().strip() == version
 assert cargo["workspace"]["package"]["version"] == version
 

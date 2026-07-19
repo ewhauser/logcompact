@@ -21,6 +21,7 @@ jobs:
     outputs:
       release_created: ${{ steps.release.outputs.release_created }}
       tag_name: ${{ steps.release.outputs.tag_name }}
+      upload_url: ${{ steps.release.outputs.upload_url }}
     steps:
       - id: release
         uses: googleapis/release-please-action@c2a5a2bd6a758a0937f1ddb1e8950609867ed15c # v4.3.0
@@ -50,3 +51,4 @@ jobs:
     uses: ./.github/workflows/release-assets.yml
     with:
       tag: ${{ needs.release.outputs.tag_name }}
+      upload_url: ${{ needs.release.outputs.upload_url }}

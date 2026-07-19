@@ -25,9 +25,12 @@ GitHub Actions token do not start separate tag-triggered workflows.
    Release Please.
 3. Release Please updates `CHANGELOG.md`, `version.txt`, the workspace package
    and dependency versions, and the matching `Cargo.lock` package versions.
-4. Release Please creates `vX.Y.Z` and the GitHub release.
-5. The same workflow publishes the crates and attaches native CLI archives for
-   Linux x86-64 and ARM64, macOS Intel and Apple Silicon, and Windows x86-64.
+4. Release Please creates `vX.Y.Z` and a draft GitHub release.
+5. The same workflow publishes the crates, builds and attests native CLI
+   archives for Linux x86-64 and ARM64, macOS Intel and Apple Silicon, and
+   Windows x86-64, and attaches them to the draft.
+6. Only after every asset is present does the workflow publish the release. At
+   that point GitHub makes the release immutable.
 
 Release Please only opens or updates a release pull request after a releasable
 Conventional Commit such as `feat:`, `fix:`, or `perf:` reaches `main`. A
@@ -37,10 +40,11 @@ empty release pull request.
 ## Release asset recovery
 
 The `Release assets` workflow accepts an existing `vX.Y.Z` tag through manual
-dispatch. It checks out that immutable tag, rebuilds all native archives,
-attests them, and replaces matching assets on the existing GitHub release. Use
-this path to resume a partial upload or backfill a release created before asset
-automation was enabled.
+dispatch. It finds the matching draft release, checks out the tag, rebuilds all
+native archives, attests and uploads them, and publishes the release. Use this
+path to resume a partial upload while the release is still a draft. GitHub does
+not allow an already-published immutable release, such as `v0.3.2`, to receive
+retroactive assets.
 
 The release configuration consistency check runs in `make check` and CI so a
 new workspace crate or version location cannot silently fall out of the release
