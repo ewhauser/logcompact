@@ -50,7 +50,7 @@ struct BufferedStream {
 /// line-arbitration order while callers gain chunk-invariant session framing.
 pub struct BuiltinDiagnosticParser {
     options: BuiltinParserOptions,
-    scopes: BTreeMap<(String, Stream), BufferedStream>,
+    scopes: BTreeMap<String, BTreeMap<Stream, BufferedStream>>,
 }
 
 impl BuiltinDiagnosticParser {
@@ -63,19 +63,13 @@ impl BuiltinDiagnosticParser {
     }
 
     fn flush_scope(&mut self, scope: &Scope, emitter: &mut Emitter<'_>) {
-        let keys = self
-            .scopes
-            .keys()
-            .filter(|(scope_id, _)| scope_id == &scope.id)
-            .cloned()
-            .collect::<Vec<_>>();
-        for key in keys {
-            let Some(buffer) = self.scopes.remove(&key) else {
-                continue;
-            };
+        let Some(streams) = self.scopes.remove(&scope.id) else {
+            return;
+        };
+        for (stream, buffer) in streams {
             let mut parsed = Vec::new();
-            diagnostics::add_text_diagnostics(
-                buffer.text.as_bytes(),
+            diagnostics::add_normalized_text_diagnostics(
+                &buffer.text,
                 &mut parsed,
                 self.options.fallback,
                 self.options.overrides,
@@ -85,9 +79,9 @@ impl BuiltinDiagnosticParser {
                     diagnostic.quality = EvidenceQuality::Located;
                 }
                 diagnostic.provenance = Some(
-                    Provenance::new(stream_name(key.1))
+                    Provenance::new(stream_name(stream))
                         .with_scope(scope)
-                        .with_span(key.1, buffer.first_line, buffer.last_line)
+                        .with_span(stream, buffer.first_line, buffer.last_line)
                         .with_parser(self.id()),
                 );
                 emitter.diagnostic(diagnostic);
@@ -102,13 +96,21 @@ impl Parser for BuiltinDiagnosticParser {
     }
 
     fn observe(&mut self, line: &LogLine<'_>, _emitter: &mut Emitter<'_>) {
-        let key = (line.scope.id.clone(), line.stream);
-        let buffer = self.scopes.entry(key).or_insert_with(|| BufferedStream {
-            text: String::new(),
-            first_line: line.stream_line,
-            last_line: line.stream_line,
-            truncated: false,
-        });
+        if !self.scopes.contains_key(&line.scope.id) {
+            self.scopes.insert(line.scope.id.clone(), BTreeMap::new());
+        }
+        let streams = self
+            .scopes
+            .get_mut(&line.scope.id)
+            .expect("scope buffer was inserted above");
+        let buffer = streams
+            .entry(line.stream)
+            .or_insert_with(|| BufferedStream {
+                text: String::new(),
+                first_line: line.stream_line,
+                last_line: line.stream_line,
+                truncated: false,
+            });
         buffer.last_line = line.stream_line;
         let required = line.text.len().saturating_add(1);
         let available = self
@@ -155,6 +157,19 @@ impl Parser for TestFailureParser {
     }
 
     fn observe(&mut self, line: &LogLine<'_>, _emitter: &mut Emitter<'_>) {
+        if self.scopes.is_empty() {
+            if !TestLogReducer::may_start_failure_line(line.text) {
+                return;
+            }
+        } else {
+            let active = self
+                .scopes
+                .get(&line.scope.id)
+                .is_some_and(TestLogReducer::failure_state_active);
+            if !active && !TestLogReducer::may_start_failure_line(line.text) {
+                return;
+            }
+        }
         let provenance = Provenance::new(stream_name(line.stream))
             .with_scope(line.scope)
             .with_span(line.stream, line.stream_line, line.stream_line)
@@ -162,7 +177,7 @@ impl Parser for TestFailureParser {
         self.scopes
             .entry(line.scope.id.clone())
             .or_default()
-            .observe_line(line.text, &provenance);
+            .observe_failure_line(line.text, &provenance);
     }
 
     fn boundary(&mut self, boundary: ScopeBoundary<'_>, emitter: &mut Emitter<'_>) {
@@ -229,11 +244,24 @@ mod tests {
     }
 
     #[test]
-    fn emits_structured_test_failures() {
-        let reduction = reduce_chunks(&[
-            b"test invoice::fails ... FAILED\n---- invoice::fails stdout ----\nthread 'invoice::fails' panicked at src/lib.rs:7:3:\nassertion `left == right` failed\n",
-        ]);
-        assert_eq!(reduction.test_failures.len(), 1);
-        assert_eq!(reduction.test_failures[0].name, "invoice::fails");
+    fn emits_structured_test_failures_for_each_streaming_framework() {
+        for (input, expected_name) in [
+            (
+                &b"test invoice::fails ... FAILED\n---- invoice::fails stdout ----\nthread 'invoice::fails' panicked at src/lib.rs:7:3:\nassertion `left == right` failed\n"[..],
+                "invoice::fails",
+            ),
+            (
+                &b"[ RUN      ] InvoiceTest.Fails\nsrc/invoice_test.cc:12: Failure\nExpected equality of these values\n[  FAILED  ] InvoiceTest.Fails (1 ms)\n"[..],
+                "InvoiceTest.Fails",
+            ),
+            (
+                &b"=== RUN   TestInvoice\ninvoice_test.go:7: got 2; want 3\n--- FAIL: TestInvoice (0.00s)\n"[..],
+                "TestInvoice",
+            ),
+        ] {
+            let reduction = reduce_chunks(&[input]);
+            assert_eq!(reduction.test_failures.len(), 1, "{expected_name}");
+            assert_eq!(reduction.test_failures[0].name, expected_name);
+        }
     }
 }

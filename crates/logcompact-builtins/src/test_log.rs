@@ -27,6 +27,20 @@ pub struct TestLogReducer {
 }
 
 impl TestLogReducer {
+    pub(crate) fn may_start_failure_line(line: &str) -> bool {
+        TestFailureAccumulator::may_start_line(line)
+    }
+
+    pub(crate) fn failure_state_active(&self) -> bool {
+        self.failures.is_active()
+    }
+
+    pub(crate) fn observe_failure_line(&mut self, line: &str, provenance: &Provenance) {
+        self.segment_provenance
+            .get_or_insert_with(|| provenance.clone());
+        self.failures.observe_line(line);
+    }
+
     pub fn observe_line(&mut self, line: &str, provenance: &Provenance) {
         self.segment_provenance
             .get_or_insert_with(|| provenance.clone());
