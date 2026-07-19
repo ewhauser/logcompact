@@ -36,6 +36,10 @@ if re.search(r"(?m)^\s+uses: actions/cache@|^\s+cache:\s*", publish_source):
     errors.append("publish.yml: publishing must not restore mutable caches")
 
 dependabot_source = (root / ".github" / "dependabot.yml").read_text()
+if dependabot_source.count("open-pull-requests-limit: 0") != 2:
+    errors.append("dependabot.yml: version update pull requests must be disabled")
+if dependabot_source.count("applies-to: security-updates") != 2:
+    errors.append("dependabot.yml: every dependency group must be security-only")
 if dependabot_source.count("default-days: 7") != 2:
     errors.append("dependabot.yml: every dependency source needs a seven-day cooldown")
 

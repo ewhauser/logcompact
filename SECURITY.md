@@ -20,8 +20,9 @@ Only the latest released version is supported with security fixes.
 GitHub Actions workflows use commit-pinned actions, default-deny permissions,
 job-scoped credentials, and checkouts that do not retain credentials. CI rejects
 dangerous triggers, mutable action references, release caches, and long-lived
-crates.io credentials. Routine dependency updates use a seven-day cooldown, and
-pull requests introducing known moderate-or-higher vulnerabilities fail review.
+crates.io credentials. Dependabot version-update pull requests are disabled;
+only advisory-triggered security updates are submitted, grouped by ecosystem.
+Pull requests introducing known moderate-or-higher vulnerabilities fail review.
 
 Crates are published from the protected `crates-io` environment with a
 short-lived credential obtained directly from crates.io through GitHub OIDC.
