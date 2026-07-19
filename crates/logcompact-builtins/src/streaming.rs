@@ -157,12 +157,18 @@ impl Parser for TestFailureParser {
     }
 
     fn observe(&mut self, line: &LogLine<'_>, _emitter: &mut Emitter<'_>) {
-        let active = self
-            .scopes
-            .get(&line.scope.id)
-            .is_some_and(TestLogReducer::is_active);
-        if !active && !TestLogReducer::may_start_line(line.text) {
-            return;
+        if self.scopes.is_empty() {
+            if !TestLogReducer::may_start_failure_line(line.text) {
+                return;
+            }
+        } else {
+            let active = self
+                .scopes
+                .get(&line.scope.id)
+                .is_some_and(TestLogReducer::failure_state_active);
+            if !active && !TestLogReducer::may_start_failure_line(line.text) {
+                return;
+            }
         }
         let provenance = Provenance::new(stream_name(line.stream))
             .with_scope(line.scope)
@@ -171,7 +177,7 @@ impl Parser for TestFailureParser {
         self.scopes
             .entry(line.scope.id.clone())
             .or_default()
-            .observe_line(line.text, &provenance);
+            .observe_failure_line(line.text, &provenance);
     }
 
     fn boundary(&mut self, boundary: ScopeBoundary<'_>, emitter: &mut Emitter<'_>) {
@@ -238,11 +244,24 @@ mod tests {
     }
 
     #[test]
-    fn emits_structured_test_failures() {
-        let reduction = reduce_chunks(&[
-            b"test invoice::fails ... FAILED\n---- invoice::fails stdout ----\nthread 'invoice::fails' panicked at src/lib.rs:7:3:\nassertion `left == right` failed\n",
-        ]);
-        assert_eq!(reduction.test_failures.len(), 1);
-        assert_eq!(reduction.test_failures[0].name, "invoice::fails");
+    fn emits_structured_test_failures_for_each_streaming_framework() {
+        for (input, expected_name) in [
+            (
+                &b"test invoice::fails ... FAILED\n---- invoice::fails stdout ----\nthread 'invoice::fails' panicked at src/lib.rs:7:3:\nassertion `left == right` failed\n"[..],
+                "invoice::fails",
+            ),
+            (
+                &b"[ RUN      ] InvoiceTest.Fails\nsrc/invoice_test.cc:12: Failure\nExpected equality of these values\n[  FAILED  ] InvoiceTest.Fails (1 ms)\n"[..],
+                "InvoiceTest.Fails",
+            ),
+            (
+                &b"=== RUN   TestInvoice\ninvoice_test.go:7: got 2; want 3\n--- FAIL: TestInvoice (0.00s)\n"[..],
+                "TestInvoice",
+            ),
+        ] {
+            let reduction = reduce_chunks(&[input]);
+            assert_eq!(reduction.test_failures.len(), 1, "{expected_name}");
+            assert_eq!(reduction.test_failures[0].name, expected_name);
+        }
     }
 }

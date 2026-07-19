@@ -27,15 +27,18 @@ pub struct TestLogReducer {
 }
 
 impl TestLogReducer {
-    pub(crate) fn may_start_line(line: &str) -> bool {
-        may_start_test_evidence(line)
+    pub(crate) fn may_start_failure_line(line: &str) -> bool {
+        TestFailureAccumulator::may_start_line(line)
     }
 
-    pub(crate) fn is_active(&self) -> bool {
-        self.javascript.is_active()
-            || self.java.is_active()
-            || self.python.is_active()
-            || self.failures.is_active()
+    pub(crate) fn failure_state_active(&self) -> bool {
+        self.failures.is_active()
+    }
+
+    pub(crate) fn observe_failure_line(&mut self, line: &str, provenance: &Provenance) {
+        self.segment_provenance
+            .get_or_insert_with(|| provenance.clone());
+        self.failures.observe_line(line);
     }
 
     pub fn observe_line(&mut self, line: &str, provenance: &Provenance) {
@@ -175,15 +178,6 @@ impl TestLogReducer {
             diagnostics,
         }
     }
-}
-
-fn may_start_test_evidence(line: &str) -> bool {
-    let line = line.trim_start();
-    line.starts_with("test ")
-        || line.starts_with("---- ")
-        || line
-            .bytes()
-            .any(|byte| matches!(byte, b':' | b'(') || byte.is_ascii_uppercase())
 }
 
 fn as_test_diagnostic(mut diagnostic: Diagnostic, provenance: &Provenance) -> Diagnostic {

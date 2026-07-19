@@ -346,10 +346,6 @@ impl JavaScriptTestDiagnosticParser {
         self.take_confirmed()
     }
 
-    pub(crate) fn is_active(&self) -> bool {
-        self.leading_location.is_some() || self.pending.is_some()
-    }
-
     fn take_confirmed(&mut self) -> Option<Diagnostic> {
         let confirmed = self
             .pending

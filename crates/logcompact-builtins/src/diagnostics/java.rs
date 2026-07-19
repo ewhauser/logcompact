@@ -154,10 +154,6 @@ impl JavaTestDiagnosticParser {
         self.take_confirmed()
     }
 
-    pub(crate) fn is_active(&self) -> bool {
-        self.pending.is_some()
-    }
-
     fn take_confirmed(&mut self) -> Option<Diagnostic> {
         let confirmed = self.pending_is_explicit || self.frames_seen > 0;
         self.pending_is_explicit = false;
