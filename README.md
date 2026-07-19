@@ -25,19 +25,19 @@ to reproduce any particular tokenizer.
 
 Logcompact is designed to sit in a log pipeline without becoming the
 bottleneck. Representative Criterion medians on GitHub Actions
-`ubuntu-latest` at `v0.3.0`:
+`ubuntu-latest`:
 
 | Workload | Input | Median | Throughput |
 | --- | ---: | ---: | ---: |
 | Exact deduplication, repeated lines | 100,000 lines / 1.80 MB | 2.22 ms | 809 MB/s |
 | Core streaming framing, 64 KiB chunks | 25,000 lines / 814 KB | 7.70 ms | 106 MB/s |
 | Single custom matcher, sparse matches, 64 KiB chunks | 25,000 lines / 1.01 MB | 13.3 ms | 76.1 MB/s |
-| Full built-in parser pack, mixed log, 64 KiB chunks | 25,000 lines / 1.01 MB | 160 ms | 6.32 MB/s |
+| Full built-in parser pack, mixed log, 64 KiB chunks | 25,000 lines / 1.01 MB | 82.2 ms | 12.3 MB/s |
 
 Even the full parser pack reduces a roughly 1 MB, 25,000-line log in about
-160 ms on a hosted CI runner. These benchmarks measure in-memory reduction;
+82 ms on a hosted CI runner. These benchmarks measure in-memory reduction;
 filesystem and terminal I/O are excluded. See the
-[benchmark run](https://github.com/ewhauser/logcompact/actions/runs/29664825162)
+[benchmark run](https://github.com/ewhauser/logcompact/actions/runs/29668023964)
 and [benchmark methodology](BENCHMARKS.md), or reproduce them with
 `make bench`.
 

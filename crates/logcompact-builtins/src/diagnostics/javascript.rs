@@ -418,8 +418,10 @@ fn path_end(value: &str) -> Option<usize> {
     EXTENSIONS
         .iter()
         .filter_map(|extension| {
-            let marker = format!("{extension}:");
-            value.rfind(&marker).map(|index| index + extension.len())
+            value.rmatch_indices(extension).find_map(|(index, _)| {
+                let path_end = index + extension.len();
+                value[path_end..].starts_with(':').then_some(path_end)
+            })
         })
         .max()
 }
