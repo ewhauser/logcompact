@@ -16,6 +16,9 @@ pub(crate) fn parse_diagnostic(line: &str) -> Option<Diagnostic> {
         .trim()
         .strip_prefix("ERROR: ")
         .unwrap_or_else(|| line.trim());
+    if !line.contains(':') && !line.contains('(') {
+        return None;
+    }
     let (path, line_number, column, message) =
         parse_colon_location(line).or_else(|| parse_parenthesized_location(line))?;
     if path.contains(": ") {

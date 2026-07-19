@@ -7,6 +7,9 @@ pub(crate) fn parse_diagnostic(line: &str) -> Option<Diagnostic> {
         .trim()
         .strip_prefix("ERROR: ")
         .unwrap_or_else(|| line.trim());
+    if !line.contains(':') && !line.contains('(') {
+        return None;
+    }
     let (path, line_number, column, message) =
         parse_parenthesized_location(line).or_else(|| parse_pretty_location(line))?;
     let message = message.trim().trim_start_matches('-').trim();
@@ -69,8 +72,10 @@ fn path_end(line: &str, delimiter: char) -> Option<usize> {
     EXTENSIONS
         .iter()
         .filter_map(|extension| {
-            let marker = format!("{extension}{delimiter}");
-            line.rfind(&marker).map(|index| index + extension.len())
+            line.rmatch_indices(extension).find_map(|(index, _)| {
+                let path_end = index + extension.len();
+                line[path_end..].starts_with(delimiter).then_some(path_end)
+            })
         })
         .max()
 }
