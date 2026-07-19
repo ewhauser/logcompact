@@ -93,6 +93,7 @@ struct TextDiagnosticContext<'a> {
     has_swc_diagnostics: bool,
     javascript_test_messages: BTreeSet<String>,
     java_test_messages: BTreeSet<String>,
+    python_messages: BTreeSet<String>,
 }
 
 impl<'a> TextDiagnosticContext<'a> {
@@ -103,6 +104,7 @@ impl<'a> TextDiagnosticContext<'a> {
             has_swc_diagnostics: false,
             javascript_test_messages: BTreeSet::new(),
             java_test_messages: BTreeSet::new(),
+            python_messages: BTreeSet::new(),
         }
     }
 }
@@ -258,7 +260,8 @@ impl<'a> TextDiagnosticScan<'a> {
                     || line.contains("Failure")
                     || line.contains("Warning")
                     || line.contains("KeyboardInterrupt")
-                    || line.contains("SystemExit");
+                    || line.contains("SystemExit")
+                    || python::is_failure_summary(line);
             } else {
                 if line.starts_with("undefined reference to ")
                     || line.starts_with("unresolved external symbol ")

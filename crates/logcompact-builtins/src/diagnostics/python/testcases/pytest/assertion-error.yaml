@@ -1,0 +1,25 @@
+output: |
+  ============================= test session starts ==============================
+  platform darwin -- Python 3.12.4, pytest-8.3.2, pluggy-1.5.0
+  rootdir: /workspace
+  collected 1 item
+
+  tests/test_invoice.py F                                                 [100%]
+
+  =================================== FAILURES ===================================
+  _________________________ test_includes_service_fee __________________________
+
+      def test_includes_service_fee():
+  >       raise AssertionError("expected total 45, got 40")
+  E       AssertionError: expected total 45, got 40
+
+  tests/test_invoice.py:8: AssertionError
+  =========================== short test summary info ============================
+  FAILED tests/test_invoice.py::test_includes_service_fee - AssertionError: expected total 45, got 40
+  ============================== 1 failed in 0.05s ===============================
+assertion:
+  diagnostics:
+    - severity: error
+      class: compiler
+      message: "AssertionError: expected total 45, got 40"
+      repetition_count: 1

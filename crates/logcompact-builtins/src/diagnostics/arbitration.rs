@@ -12,6 +12,11 @@ pub(super) fn reduce_python(input: &str, context: &mut TextDiagnosticContext<'_>
             continue;
         }
         if let Some(diagnostic) = parser.observe_line(line) {
+            context.python_messages.insert(diagnostic.message.clone());
+            context.diagnostics.push(diagnostic);
+        } else if let Some(diagnostic) = python::parse_failure_summary(line)
+            && !context.python_messages.contains(&diagnostic.message)
+        {
             context.diagnostics.push(diagnostic);
         }
     }
@@ -128,6 +133,7 @@ fn claimed_language_line(line: &str, context: &TextDiagnosticContext<'_>) -> boo
         || java::parse_compiler_diagnostic(line).is_some()
         || rust::parse_error_header(line).is_some()
         || claimed_test_exception(line, context)
+        || python::is_failure_summary(line)
         || python::parse_location(line).is_some()
         || python::exception_message(line).is_some()
 }
