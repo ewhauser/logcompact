@@ -1,4 +1,4 @@
-.PHONY: build test fmt lint doc boundary release-config check package-check fuzz-smoke bench bench-core bench-builtins
+.PHONY: build test fmt lint doc boundary release-config workflow-security check package-check fuzz-smoke bench bench-core bench-builtins
 
 build:
 	cargo build --workspace --all-features --locked
@@ -21,7 +21,10 @@ boundary:
 release-config:
 	python3 scripts/check-release-please-config.py
 
-check: fmt boundary release-config test lint doc
+workflow-security:
+	python3 scripts/check-workflow-security.py
+
+check: fmt boundary release-config workflow-security test lint doc
 
 package-check:
 	cargo package --list -p logcompact-core --locked --allow-dirty

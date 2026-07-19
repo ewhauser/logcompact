@@ -47,9 +47,10 @@ reusable `publish.yml` workflow, GitHub identifies the OIDC request to crates.io
 by the calling workflow (`release-please.yml`). A manually dispatched recovery
 run is identified by `publish.yml` instead.
 
-Then set the GitHub repository variable `CRATES_IO_TRUSTED_PUBLISHING` to
-`true`. Automated and manual workflow runs obtain short-lived crates.io
-credential through GitHub OIDC and do not require a stored API token.
+Automated and manual workflow runs obtain a short-lived crates.io credential
+through GitHub OIDC. Publication fails closed if trusted publishing is not
+available; the repository and `crates-io` environment must not store a crates.io
+API token.
 
 For recovery, `Publish crates` can be dispatched manually with an existing
 release tag. It checks out that tag, verifies the version and packages, and
@@ -59,7 +60,6 @@ The publisher is resumable. If a run stops after publishing only part of the
 workspace, rerun it from the same tag; already-published package versions are
 verified against crates.io and skipped.
 
-If trusted publishing is temporarily unavailable, add a short-lived crates.io
-API token as the `CARGO_REGISTRY_TOKEN` secret on the `crates-io` environment,
-dispatch `Publish crates` for the exact release tag, and remove the token after
-the run completes.
+If trusted publishing is temporarily unavailable, repair the crates.io trusted
+publisher record and dispatch `Publish crates` for the exact existing release
+tag. Do not bypass the OIDC release identity with a long-lived API token.

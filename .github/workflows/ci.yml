@@ -5,8 +5,7 @@ on:
     branches: [main]
   pull_request:
 
-permissions:
-  contents: read
+permissions: {}
 
 concurrency:
   group: ci-${{ github.workflow }}-${{ github.ref }}
@@ -20,13 +19,18 @@ jobs:
   quality:
     name: quality
     runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with: { persist-credentials: false }
       - name: Install Rust toolchain
         run: rustup toolchain install 1.94.1 --profile minimal --component clippy,rustfmt
       - run: cargo fmt --all -- --check
       - run: python3 scripts/check-boundary.py
       - run: python3 scripts/check-release-please-config.py
+      - run: python3 scripts/check-workflow-security.py
       - run: cargo clippy --workspace --all-targets --all-features --locked -- -D warnings
       - name: Compile benchmarks
         run: cargo bench --workspace --all-features --locked --no-run
@@ -40,8 +44,27 @@ jobs:
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with: { persist-credentials: false }
       - name: Install Rust toolchain
         run: rustup toolchain install 1.94.1 --profile minimal
       - run: cargo test --workspace --all-features --locked
+
+  workflow-security:
+    name: workflow security
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with: { persist-credentials: false }
+      - run: python3 scripts/check-workflow-security.py
+      - name: Audit GitHub Actions supply chain
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: pipx run --spec zizmor==1.25.2 zizmor .github
