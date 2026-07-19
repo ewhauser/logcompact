@@ -33,15 +33,22 @@ update.
 
 ## Trusted publishing
 
-For each of the three crates on crates.io, add a trusted publisher with:
+For each of the three crates on crates.io, add two trusted publishers with the
+same repository and environment:
 
 - repository owner: `ewhauser`
 - repository: `logcompact`
-- workflow: `publish.yml`
 - environment: `crates-io`
+- workflow: `release-please.yml` for automated releases
+- workflow: `publish.yml` for manual recovery
+
+Both workflow entries are required. Although `release-please.yml` calls the
+reusable `publish.yml` workflow, GitHub identifies the OIDC request to crates.io
+by the calling workflow (`release-please.yml`). A manually dispatched recovery
+run is identified by `publish.yml` instead.
 
 Then set the GitHub repository variable `CRATES_IO_TRUSTED_PUBLISHING` to
-`true`. Automated and manual workflow runs obtain a short-lived crates.io
+`true`. Automated and manual workflow runs obtain short-lived crates.io
 credential through GitHub OIDC and do not require a stored API token.
 
 For recovery, `Publish crates` can be dispatched manually with an existing
