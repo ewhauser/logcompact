@@ -1,0 +1,30 @@
+output: |
+  ============================= test session starts ==============================
+  platform linux -- Python 3.12.7, pytest-8.3.3, pluggy-1.5.0
+  rootdir: /workspace
+  collected 1 item
+
+  tests/test_loader.py F                                                  [100%]
+
+  =================================== FAILURES ===================================
+  _____________________________ test_load_invoice ______________________________
+  Traceback (most recent call last):
+    File "tests/test_loader.py", line 11, in test_load_invoice
+      load_invoice("missing.json")
+    File "src/invoice/loader.py", line 27, in load_invoice
+      raise RuntimeError("invoice fixture is missing")
+  RuntimeError: invoice fixture is missing
+
+  =========================== short test summary info ============================
+  FAILED tests/test_loader.py::test_load_invoice - RuntimeError: invoice fixture is missing
+  ============================== 1 failed in 0.04s ===============================
+assertion:
+  diagnostics:
+    - severity: error
+      class: compiler
+      message: "RuntimeError: invoice fixture is missing"
+      location:
+        path: src/invoice/loader.py
+        line: 27
+      quality: located
+      repetition_count: 1

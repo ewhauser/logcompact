@@ -1,0 +1,30 @@
+output: |
+  ============================= test session starts ==============================
+  platform linux -- Python 3.12.7, pytest-8.3.3, pluggy-1.5.0
+  rootdir: /workspace
+  collected 1 item
+
+  tests/test_invoice.py F                                                 [100%]
+
+  =================================== FAILURES ===================================
+  _________________________ test_includes_service_fee __________________________
+
+      def test_includes_service_fee():
+  >       assert invoice_total([20, 20]) == 45
+  E       assert 40 == 45
+  E        +  where 40 = invoice_total([20, 20])
+
+  tests/test_invoice.py:8: AssertionError
+  =========================== short test summary info ============================
+  FAILED tests/test_invoice.py::test_includes_service_fee - assert 40 == 45
+  ============================== 1 failed in 0.05s ===============================
+assertion:
+  diagnostics:
+    - severity: error
+      class: test
+      code: pytest.failure
+      message: "assert 40 == 45"
+      location:
+        path: tests/test_invoice.py
+      quality: located
+      repetition_count: 1
