@@ -1,0 +1,22 @@
+output: |2
+    x Expression expected
+     ,-[src/invoice.ts:2:1]
+   1 | export const invoice = {
+   2 |   total: ,
+     :          ^
+     `----
+assertion:
+  diagnostics:
+    - severity: error
+      class: compiler
+      code: swc.parser
+      message: |-
+        Expression expected
+        2 |   total: ,
+        :          ^
+      location:
+        path: src/invoice.ts
+        line: 2
+        column: 1
+      quality: located
+      repetition_count: 1

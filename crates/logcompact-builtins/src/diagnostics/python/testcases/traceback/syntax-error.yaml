@@ -1,0 +1,15 @@
+output: |2
+    File "src/parser.py", line 7
+      value =
+             ^
+  SyntaxError: invalid syntax
+assertion:
+  diagnostics:
+    - severity: error
+      class: compiler
+      message: "SyntaxError: invalid syntax"
+      location:
+        path: src/parser.py
+        line: 7
+      quality: located
+      repetition_count: 1

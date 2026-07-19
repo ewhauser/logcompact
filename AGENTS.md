@@ -16,6 +16,12 @@ findings. Preserve these invariants:
   candidates, output items, and serialized bytes.
 - Keep the CLI a thin incremental I/O and presentation adapter. It does not
   launch commands or invoke a shell.
+- Every diagnostic bug fix and every new diagnostic or framework must add or
+  update a YAML regression case at
+  `crates/logcompact-builtins/src/diagnostics/<language>/testcases/<framework>/<case>.yaml`.
+  The corpus harness discovers these `.yaml` files automatically; cases must
+  contain exactly `output` and `assertion` sections and must pass both exact
+  batch assertions and streaming chunk-equivalence checks.
 - Treat fixture changes as reviewed golden diffs.
 - Keep all crates publishable and use Conventional Commits.
 

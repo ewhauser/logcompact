@@ -1,0 +1,12 @@
+output: |
+  Undefined symbols for architecture arm64:
+    "_calculate_total", referenced from:
+        _main in invoice.o
+  ld: symbol(s) not found for architecture arm64
+assertion:
+  diagnostics:
+    - severity: error
+      class: compiler
+      message: "undefined symbol: _calculate_total"
+      quality: structured
+      repetition_count: 1

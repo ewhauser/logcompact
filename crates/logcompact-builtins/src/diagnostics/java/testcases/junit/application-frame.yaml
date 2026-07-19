@@ -1,0 +1,14 @@
+output: |
+  Exception in thread "main" java.lang.IllegalStateException: invalid total
+      at org.junit.platform.engine.support.hierarchical.NodeTestTask.execute(NodeTestTask.java:95)
+      at com.example.Invoice.total(Invoice.java:42)
+assertion:
+  diagnostics:
+    - severity: error
+      class: test
+      message: "java.lang.IllegalStateException: invalid total"
+      location:
+        path: com/example/Invoice.java
+        line: 42
+      quality: located
+      repetition_count: 1

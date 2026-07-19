@@ -27,6 +27,7 @@ serde_json.workspace = true
 
 [dev-dependencies]
 criterion.workspace = true
+serde-saphyr.workspace = true
 
 [[bench]]
 name = "streaming"

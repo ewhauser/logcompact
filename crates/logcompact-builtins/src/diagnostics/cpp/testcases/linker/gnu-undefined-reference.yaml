@@ -1,0 +1,12 @@
+output: |
+  /workspace/src/invoice.cc:42: undefined reference to `calculate_total'
+assertion:
+  diagnostics:
+    - severity: error
+      class: compiler
+      message: "undefined reference to calculate_total"
+      location:
+        path: /workspace/src/invoice.cc
+        line: 42
+      quality: located
+      repetition_count: 1

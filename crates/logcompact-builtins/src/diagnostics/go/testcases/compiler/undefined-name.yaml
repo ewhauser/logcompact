@@ -1,0 +1,13 @@
+output: |
+  src/main.go:12:4: undefined: total
+assertion:
+  diagnostics:
+    - severity: error
+      class: compiler
+      message: "undefined: total"
+      location:
+        path: src/main.go
+        line: 12
+        column: 4
+      quality: located
+      repetition_count: 1

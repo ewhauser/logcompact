@@ -1,0 +1,4 @@
+output: |
+  error[E9999]: synthetic wrapper without source evidence
+assertion:
+  diagnostics: []

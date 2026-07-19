@@ -1,0 +1,15 @@
+output: |
+  TypeError: total is not a function
+      at node:internal/process/task_queues:95:5
+      at src/invoice.test.js:8:3
+assertion:
+  diagnostics:
+    - severity: error
+      class: test
+      message: "TypeError: total is not a function"
+      location:
+        path: src/invoice.test.js
+        line: 8
+        column: 3
+      quality: located
+      repetition_count: 1

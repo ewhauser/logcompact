@@ -1,0 +1,13 @@
+output: |
+  src/main.cc:12:4: error: unknown identifier 'total'
+assertion:
+  diagnostics:
+    - severity: error
+      class: compiler
+      message: "unknown identifier 'total'"
+      location:
+        path: src/main.cc
+        line: 12
+        column: 4
+      quality: located
+      repetition_count: 1
