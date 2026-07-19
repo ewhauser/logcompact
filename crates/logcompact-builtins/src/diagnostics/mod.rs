@@ -233,10 +233,8 @@ impl<'a> TextDiagnosticScan<'a> {
             if line.is_empty() {
                 continue;
             }
-            let interesting = line.bytes().any(|byte| {
-                matches!(byte, b':' | b'(') || byte.is_ascii_uppercase() || !byte.is_ascii()
-            });
-            if interesting {
+            let classification = arbitration::classify_line(line);
+            if classification.interesting {
                 hints.swc |= line.contains(",-") || line.contains("╭─");
                 hints.cpp_linker |= line.contains("undefined reference to ")
                     || line.contains("undefined symbol:")
@@ -268,7 +266,7 @@ impl<'a> TextDiagnosticScan<'a> {
                     hints.cpp_linker = true;
                 }
             }
-            if arbitration::may_be_diagnostic_line(line) {
+            if classification.candidate {
                 if let Some(count) = counts.get_mut(line) {
                     *count = count.saturating_add(1);
                 } else {

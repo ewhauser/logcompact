@@ -73,23 +73,47 @@ pub(super) fn reduce_lines(
     }
 }
 
-pub(super) fn may_be_diagnostic_line(line: &str) -> bool {
-    if line.bytes().any(|byte| matches!(byte, b':' | b'(')) {
-        return true;
-    }
+pub(super) struct LineClassification {
+    pub(super) interesting: bool,
+    pub(super) candidate: bool,
+}
+
+pub(super) fn classify_line(line: &str) -> LineClassification {
     let line = line.trim_start();
-    line.starts_with("error ")
+    let mut interesting = false;
+    let mut candidate = line.starts_with("error ")
         || line.starts_with("failed")
         || line.starts_with("fatal ")
-        || line.starts_with("test ")
-        || line.contains("undefined reference")
-        || line.contains("unresolved external symbol")
-        || line.contains("panicked at")
-        || line.contains("assertion")
-        || line.contains("FAILED")
-        || line.contains("Failure")
-        || line.contains("Exception")
-        || line.contains("Error")
+        || line.starts_with("test ");
+    let bytes = line.as_bytes();
+    for (index, byte) in bytes.iter().copied().enumerate() {
+        if matches!(byte, b':' | b'(') {
+            return LineClassification {
+                interesting: true,
+                candidate: true,
+            };
+        }
+        interesting |= byte.is_ascii_uppercase() || !byte.is_ascii();
+        if candidate {
+            continue;
+        }
+        let remainder = &bytes[index..];
+        candidate = match byte {
+            b'u' => {
+                remainder.starts_with(b"undefined reference")
+                    || remainder.starts_with(b"unresolved external symbol")
+            }
+            b'p' => remainder.starts_with(b"panicked at"),
+            b'a' => remainder.starts_with(b"assertion"),
+            b'F' => remainder.starts_with(b"FAILED") || remainder.starts_with(b"Failure"),
+            b'E' => remainder.starts_with(b"Exception") || remainder.starts_with(b"Error"),
+            _ => false,
+        };
+    }
+    LineClassification {
+        interesting,
+        candidate,
+    }
 }
 
 fn claimed_test_exception(line: &str, context: &TextDiagnosticContext<'_>) -> bool {

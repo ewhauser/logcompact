@@ -31,12 +31,11 @@ impl TestLogReducer {
         may_start_test_evidence(line)
     }
 
-    pub(crate) fn may_observe_line(&self, line: &str) -> bool {
+    pub(crate) fn is_active(&self) -> bool {
         self.javascript.is_active()
             || self.java.is_active()
             || self.python.is_active()
             || self.failures.is_active()
-            || may_start_test_evidence(line)
     }
 
     pub fn observe_line(&mut self, line: &str, provenance: &Provenance) {

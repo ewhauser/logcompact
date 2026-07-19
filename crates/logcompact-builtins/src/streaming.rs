@@ -157,12 +157,11 @@ impl Parser for TestFailureParser {
     }
 
     fn observe(&mut self, line: &LogLine<'_>, _emitter: &mut Emitter<'_>) {
-        if !self
+        let active = self
             .scopes
             .get(&line.scope.id)
-            .is_some_and(|reducer| reducer.may_observe_line(line.text))
-            && !TestLogReducer::may_start_line(line.text)
-        {
+            .is_some_and(TestLogReducer::is_active);
+        if !active && !TestLogReducer::may_start_line(line.text) {
             return;
         }
         let provenance = Provenance::new(stream_name(line.stream))
