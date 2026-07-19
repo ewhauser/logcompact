@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.2](https://github.com/ewhauser/logcompact/compare/v0.3.1...v0.3.2) (2026-07-19)
+
+
+### Performance Improvements
+
+* exceed 150 MB/s built-in parsing ([#14](https://github.com/ewhauser/logcompact/issues/14)) ([9a8b8da](https://github.com/ewhauser/logcompact/commit/9a8b8da30cfd4c2436160deee0c54cb731ef5cfc))
+
 ## [0.3.1](https://github.com/ewhauser/logcompact/compare/v0.3.0...v0.3.1) (2026-07-19)
 
 
