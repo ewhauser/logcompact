@@ -27,7 +27,7 @@ jobs:
       - name: Install Rust toolchain
         run: rustup toolchain install 1.94.1 --profile minimal
       - name: Run reusable reducer benchmarks
-        run: cargo bench --workspace --all-features --locked
+        run: cargo bench --profile release --workspace --all-features --locked
       - name: Upload Criterion reports
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2

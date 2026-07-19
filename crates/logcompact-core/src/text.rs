@@ -1,3 +1,4 @@
+use std::borrow::Cow;
 use std::collections::BTreeMap;
 
 /// Removes terminal control sequences and normalizes progress redraws to lines.
@@ -51,6 +52,17 @@ pub fn normalize_terminal_text(input: &[u8]) -> String {
         .join("\n")
 }
 
+pub(crate) fn normalize_terminal_line(input: &[u8]) -> Cow<'_, str> {
+    if input
+        .iter()
+        .all(|byte| *byte == b'\t' || (b' '..=b'~').contains(byte))
+    {
+        let line = std::str::from_utf8(input).expect("ASCII bytes are valid UTF-8");
+        return Cow::Borrowed(line.trim_end());
+    }
+    Cow::Owned(normalize_terminal_text(input))
+}
+
 /// Exact line deduplication that preserves first-seen order.
 #[must_use]
 pub fn deduplicate_lines(input: &str) -> Vec<(String, u32)> {
@@ -88,5 +100,15 @@ mod tests {
             deduplicate_lines(" warning \nerror\nwarning\n\n error "),
             vec![("warning".into(), 2), ("error".into(), 2)]
         );
+    }
+
+    #[test]
+    fn line_normalization_borrows_plain_ascii_and_cleans_controls() {
+        assert!(matches!(
+            normalize_terminal_line(b"plain output"),
+            Cow::Borrowed(_)
+        ));
+        assert_eq!(normalize_terminal_line(b"plain output  "), "plain output");
+        assert_eq!(normalize_terminal_line(b"\x1b[31mERROR\x1b[0m"), "ERROR");
     }
 }

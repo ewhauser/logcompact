@@ -2,9 +2,10 @@ use std::collections::{BTreeMap, BTreeSet};
 use std::error::Error;
 use std::fmt::{Display, Formatter};
 
+use crate::text::normalize_terminal_line;
 use crate::{
     Diagnostic, EndReason, LogLine, OutputPolicy, Provenance, Reduction, ReductionStats, Scope,
-    SessionOptions, Stream, TestFailure, finalize_findings, normalize_terminal_text,
+    SessionOptions, Stream, TestFailure, finalize_findings,
 };
 
 /// Parser lifecycle notification for a caller-owned scope.
@@ -94,7 +95,39 @@ struct CandidateStore {
 pub struct Emitter<'a> {
     store: &'a mut CandidateStore,
     maximum: usize,
-    provenance: Option<Provenance>,
+    provenance: EmitterProvenance<'a>,
+}
+
+enum EmitterProvenance<'a> {
+    None,
+    Context {
+        source: &'static str,
+        scope: Option<&'a Scope>,
+        span: Option<(Stream, u64, u64)>,
+        parser: &'static str,
+    },
+}
+
+impl EmitterProvenance<'_> {
+    fn materialize(&self) -> Option<Provenance> {
+        let Self::Context {
+            source,
+            scope,
+            span,
+            parser,
+        } = self
+        else {
+            return None;
+        };
+        let mut provenance = Provenance::new(*source).with_parser(*parser);
+        if let Some(scope) = scope {
+            provenance = provenance.with_scope(scope);
+        }
+        if let Some((stream, start_line, end_line)) = span {
+            provenance = provenance.with_span(*stream, *start_line, *end_line);
+        }
+        Some(provenance)
+    }
 }
 
 impl Emitter<'_> {
@@ -115,7 +148,7 @@ impl Emitter<'_> {
             return;
         }
         if diagnostic.provenance.is_none() {
-            diagnostic.provenance = self.provenance.clone();
+            diagnostic.provenance = self.provenance.materialize();
         }
         self.store.diagnostics.push(diagnostic);
     }
@@ -132,7 +165,7 @@ impl Emitter<'_> {
             return;
         }
         if failure.provenance.is_none() {
-            failure.provenance = self.provenance.clone();
+            failure.provenance = self.provenance.materialize();
         }
         self.store.test_failures.push(failure);
     }
@@ -226,8 +259,7 @@ impl<'a> ReductionSession<'a> {
         }
 
         let key = (scope_id.to_owned(), stream);
-        let buffer = self.buffers.entry(key).or_default();
-        let mut completed = Vec::<(Vec<u8>, bool)>::new();
+        let mut buffer = self.buffers.remove(&key).unwrap_or_default();
         for byte in &chunk[..retained] {
             let boundary = *byte == b'\n' || *byte == b'\r';
             if boundary {
@@ -235,7 +267,8 @@ impl<'a> ReductionSession<'a> {
                     buffer.previous_was_cr = false;
                     continue;
                 }
-                completed.push((std::mem::take(&mut buffer.bytes), buffer.truncated));
+                self.dispatch_bytes(scope_id, stream, &buffer.bytes, buffer.truncated);
+                buffer.bytes.clear();
                 buffer.truncated = false;
                 buffer.previous_was_cr = *byte == b'\r';
             } else {
@@ -247,9 +280,7 @@ impl<'a> ReductionSession<'a> {
                 }
             }
         }
-        for (bytes, truncated) in completed {
-            self.dispatch_bytes(scope_id, stream, bytes, truncated);
-        }
+        self.buffers.insert(key, buffer);
         true
     }
 
@@ -268,16 +299,16 @@ impl<'a> ReductionSession<'a> {
         let mut emitter = Emitter {
             store: &mut self.candidates,
             maximum: self.options.limits.max_candidates,
-            provenance: None,
+            provenance: EmitterProvenance::None,
         };
         emitter.diagnostic(diagnostic);
         true
     }
 
     pub fn end_scope(&mut self, scope_id: &str, reason: EndReason) -> bool {
-        let Some(mut state) = self.scopes.remove(scope_id) else {
+        if !self.scopes.contains_key(scope_id) {
             return false;
-        };
+        }
         let keys = self
             .buffers
             .keys()
@@ -288,14 +319,13 @@ impl<'a> ReductionSession<'a> {
             if let Some(buffer) = self.buffers.remove(&key)
                 && (!buffer.bytes.is_empty() || buffer.truncated)
             {
-                self.scopes.insert(scope_id.to_owned(), state.clone());
-                self.dispatch_bytes(scope_id, key.1, buffer.bytes, buffer.truncated);
-                state = self
-                    .scopes
-                    .remove(scope_id)
-                    .expect("temporary scope state must remain present");
+                self.dispatch_bytes(scope_id, key.1, &buffer.bytes, buffer.truncated);
             }
         }
+        let state = self
+            .scopes
+            .remove(scope_id)
+            .expect("scope existence was checked before flushing buffers");
         let effective_reason = if state.truncated && reason == EndReason::Complete {
             EndReason::Truncated
         } else {
@@ -317,11 +347,15 @@ impl<'a> ReductionSession<'a> {
             self.end_scope(&scope_id, EndReason::Interrupted);
         }
         for parser in &mut self.plan.parsers {
-            let provenance = Some(Provenance::new("parser").with_parser(parser.id()));
             let mut emitter = Emitter {
                 store: &mut self.candidates,
                 maximum: self.options.limits.max_candidates,
-                provenance,
+                provenance: EmitterProvenance::Context {
+                    source: "parser",
+                    scope: None,
+                    span: None,
+                    parser: parser.id(),
+                },
             };
             parser.finish(&mut emitter);
         }
@@ -345,48 +379,44 @@ impl<'a> ReductionSession<'a> {
         )
     }
 
-    fn dispatch_bytes(&mut self, scope_id: &str, stream: Stream, bytes: Vec<u8>, truncated: bool) {
-        let normalized = normalize_terminal_text(&bytes);
+    fn dispatch_bytes(&mut self, scope_id: &str, stream: Stream, bytes: &[u8], truncated: bool) {
+        let normalized = normalize_terminal_line(bytes);
         if normalized.is_empty() {
             return;
         }
-        for text in normalized.lines() {
-            let Some(state) = self.scopes.get_mut(scope_id) else {
-                return;
+        let Some(state) = self.scopes.get_mut(scope_id) else {
+            return;
+        };
+        let stream_line = state.stream_lines.entry(stream).or_default();
+        *stream_line = stream_line.saturating_add(1);
+        let stream_line = *stream_line;
+        let ordinal = self.next_ordinal;
+        self.next_ordinal = self.next_ordinal.saturating_add(1);
+        self.stats.lines_seen = self.stats.lines_seen.saturating_add(1);
+        if truncated {
+            self.stats.truncated_lines = self.stats.truncated_lines.saturating_add(1);
+            state.truncated = true;
+        }
+        let line = LogLine {
+            scope: &state.scope,
+            stream,
+            ordinal,
+            stream_line,
+            text: &normalized,
+            truncated,
+        };
+        for parser in &mut self.plan.parsers {
+            let mut emitter = Emitter {
+                store: &mut self.candidates,
+                maximum: self.options.limits.max_candidates,
+                provenance: EmitterProvenance::Context {
+                    source: stream_name(stream),
+                    scope: Some(&state.scope),
+                    span: Some((stream, stream_line, stream_line)),
+                    parser: parser.id(),
+                },
             };
-            let stream_line = state.stream_lines.entry(stream).or_default();
-            *stream_line = stream_line.saturating_add(1);
-            let stream_line = *stream_line;
-            let scope = state.scope.clone();
-            let ordinal = self.next_ordinal;
-            self.next_ordinal = self.next_ordinal.saturating_add(1);
-            self.stats.lines_seen = self.stats.lines_seen.saturating_add(1);
-            if truncated {
-                self.stats.truncated_lines = self.stats.truncated_lines.saturating_add(1);
-                state.truncated = true;
-            }
-            let line = LogLine {
-                scope: &scope,
-                stream,
-                ordinal,
-                stream_line,
-                text,
-                truncated,
-            };
-            for parser in &mut self.plan.parsers {
-                let provenance = Some(
-                    Provenance::new(stream_name(stream))
-                        .with_scope(&scope)
-                        .with_span(stream, stream_line, stream_line)
-                        .with_parser(parser.id()),
-                );
-                let mut emitter = Emitter {
-                    store: &mut self.candidates,
-                    maximum: self.options.limits.max_candidates,
-                    provenance,
-                };
-                parser.observe(&line, &mut emitter);
-            }
+            parser.observe(&line, &mut emitter);
         }
     }
 
@@ -395,15 +425,15 @@ impl<'a> ReductionSession<'a> {
             let scope = match &boundary {
                 ScopeBoundary::Begin(scope) | ScopeBoundary::End { scope, .. } => scope,
             };
-            let provenance = Some(
-                Provenance::new("boundary")
-                    .with_scope(scope)
-                    .with_parser(parser.id()),
-            );
             let mut emitter = Emitter {
                 store: &mut self.candidates,
                 maximum: self.options.limits.max_candidates,
-                provenance,
+                provenance: EmitterProvenance::Context {
+                    source: "boundary",
+                    scope: Some(scope),
+                    span: None,
+                    parser: parser.id(),
+                },
             };
             parser.boundary(boundary.clone(), &mut emitter);
         }

@@ -62,6 +62,31 @@ struct GoFailureBlock {
 }
 
 impl TestFailureAccumulator {
+    pub(crate) fn may_start_line(line: &str) -> bool {
+        if line.ends_with(": Failure") {
+            return true;
+        }
+        match line.as_bytes().first() {
+            Some(b'=') => line.starts_with("=== RUN"),
+            Some(b'-') => line.starts_with("--- FAIL:") || line.starts_with("---- "),
+            Some(b'[') => line.starts_with("[ RUN      ] "),
+            Some(b't') => {
+                line.starts_with("thread '")
+                    || (line.starts_with("test ") && line.ends_with(" ... FAILED"))
+            }
+            _ => false,
+        }
+    }
+
+    pub(crate) fn is_active(&self) -> bool {
+        self.current.is_some()
+            || self.gtest_running_name.is_some()
+            || self.gtest_current.is_some()
+            || self.go_running_name.is_some()
+            || self.go_panic_name.is_some()
+            || !self.go_blocks.is_empty()
+    }
+
     pub fn observe_line(&mut self, line: &str) {
         let line = line.trim();
         if line.is_empty() {
