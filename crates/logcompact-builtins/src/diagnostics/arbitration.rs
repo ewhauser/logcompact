@@ -1,7 +1,5 @@
 use crate::{Diagnostic, DiagnosticClass, Severity};
 
-use crate::deduplicate_lines;
-
 use super::{
     BuiltinMatcherOverrides, LineDiagnosticReducer, TextDiagnosticContext, cpp, java, javascript,
     python, rust,
@@ -20,16 +18,15 @@ pub(super) fn reduce_python(input: &str, context: &mut TextDiagnosticContext<'_>
 }
 
 pub(super) fn reduce_lines(
-    input: &str,
+    candidates: Vec<(&str, u32)>,
     context: &mut TextDiagnosticContext<'_>,
     registry: &[LineDiagnosticReducer],
     include_fallbacks: bool,
     overrides: BuiltinMatcherOverrides,
 ) {
-    let candidates = deduplicate_lines(input);
     for (line, count) in candidates {
         if context.swc_consumed_lines.contains(line.trim())
-            || (context.has_swc_diagnostics && javascript::is_swc_action_wrapper(&line))
+            || (context.has_swc_diagnostics && javascript::is_swc_action_wrapper(line))
         {
             continue;
         }
@@ -43,20 +40,20 @@ pub(super) fn reduce_lines(
             if !(reducer.enabled)(false) {
                 continue;
             }
-            if let Some(mut diagnostic) = (reducer.parse)(&line) {
+            if let Some(mut diagnostic) = (reducer.parse)(line) {
                 diagnostic.repetition_count = count;
                 context.diagnostics.push(diagnostic);
                 parsed = true;
                 break;
             }
         }
-        if parsed || claimed_language_line(&line, context) {
+        if parsed || claimed_language_line(line, context) {
             continue;
         }
         if !include_fallbacks {
             continue;
         }
-        if !is_actionable(&line) {
+        if !is_actionable(line) {
             continue;
         }
         context.diagnostics.push(Diagnostic {
@@ -65,15 +62,34 @@ pub(super) fn reduce_lines(
             } else {
                 Severity::Error
             },
-            class: category_from_text(&line),
+            class: category_from_text(line),
             code: Some("generic.fallback".to_owned()),
             provenance: None,
-            message: line,
+            message: line.to_owned(),
             location: None,
             quality: crate::EvidenceQuality::Fallback,
             repetition_count: count,
         });
     }
+}
+
+pub(super) fn may_be_diagnostic_line(line: &str) -> bool {
+    if line.bytes().any(|byte| matches!(byte, b':' | b'(')) {
+        return true;
+    }
+    let line = line.trim_start();
+    line.starts_with("error ")
+        || line.starts_with("failed")
+        || line.starts_with("fatal ")
+        || line.starts_with("test ")
+        || line.contains("undefined reference")
+        || line.contains("unresolved external symbol")
+        || line.contains("panicked at")
+        || line.contains("assertion")
+        || line.contains("FAILED")
+        || line.contains("Failure")
+        || line.contains("Exception")
+        || line.contains("Error")
 }
 
 fn claimed_test_exception(line: &str, context: &TextDiagnosticContext<'_>) -> bool {

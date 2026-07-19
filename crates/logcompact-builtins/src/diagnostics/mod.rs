@@ -9,7 +9,7 @@ mod python;
 mod rust;
 mod typescript;
 
-use std::collections::BTreeSet;
+use std::collections::{BTreeMap, BTreeSet};
 
 use crate::{Diagnostic, FallbackPolicy, normalize_terminal_text};
 
@@ -76,6 +76,7 @@ fn builtin_owner_bit(owner: &str) -> Option<u16> {
 #[derive(Clone, Copy)]
 struct TextDiagnosticReducer {
     name: &'static str,
+    enabled: fn(&TextDiagnosticHints) -> bool,
     reduce: for<'a> fn(&str, &mut TextDiagnosticContext<'a>),
 }
 
@@ -109,30 +110,37 @@ impl<'a> TextDiagnosticContext<'a> {
 const TEXT_DIAGNOSTIC_REDUCERS: &[TextDiagnosticReducer] = &[
     TextDiagnosticReducer {
         name: "javascript-swc",
+        enabled: may_contain_swc,
         reduce: reduce_swc,
     },
     TextDiagnosticReducer {
         name: "cpp-linker",
+        enabled: may_contain_cpp_linker,
         reduce: reduce_cpp_linker,
     },
     TextDiagnosticReducer {
         name: "java-compiler",
+        enabled: may_contain_java_compiler,
         reduce: reduce_java_compiler,
     },
     TextDiagnosticReducer {
         name: "rust-compiler",
+        enabled: may_contain_rust_compiler,
         reduce: reduce_rust_compiler,
     },
     TextDiagnosticReducer {
         name: "javascript-test",
+        enabled: may_contain_javascript_test,
         reduce: reduce_javascript_tests,
     },
     TextDiagnosticReducer {
         name: "java-test",
+        enabled: may_contain_java_test,
         reduce: reduce_java_tests,
     },
     TextDiagnosticReducer {
         name: "python",
+        enabled: may_contain_python,
         reduce: arbitration::reduce_python,
     },
 ];
@@ -167,21 +175,142 @@ pub(crate) fn add_text_diagnostics(
     overrides: BuiltinMatcherOverrides,
 ) {
     let normalized = normalize_terminal_text(input);
+    add_normalized_text_diagnostics(&normalized, diagnostics, fallback, overrides);
+}
+
+pub(crate) fn add_normalized_text_diagnostics(
+    normalized: &str,
+    diagnostics: &mut Vec<Diagnostic>,
+    fallback: FallbackPolicy,
+    overrides: BuiltinMatcherOverrides,
+) {
+    let scan = TextDiagnosticScan::from_input(normalized);
     let mut context = TextDiagnosticContext::new(diagnostics);
     for reducer in TEXT_DIAGNOSTIC_REDUCERS {
         debug_assert!(!reducer.name.is_empty());
         if overrides.contains(reducer.name) {
             continue;
         }
-        (reducer.reduce)(&normalized, &mut context);
+        if !(reducer.enabled)(&scan.hints) {
+            continue;
+        }
+        (reducer.reduce)(normalized, &mut context);
     }
     arbitration::reduce_lines(
-        &normalized,
+        scan.candidates,
         &mut context,
         LINE_DIAGNOSTIC_REDUCERS,
         fallback == FallbackPolicy::Generic,
         overrides,
     );
+}
+
+#[derive(Default)]
+struct TextDiagnosticHints {
+    swc: bool,
+    cpp_linker: bool,
+    java_compiler: bool,
+    rust_header: bool,
+    rust_location: bool,
+    javascript_exception: bool,
+    javascript_location: bool,
+    java_test: bool,
+    python: bool,
+}
+
+struct TextDiagnosticScan<'a> {
+    hints: TextDiagnosticHints,
+    candidates: Vec<(&'a str, u32)>,
+}
+
+impl<'a> TextDiagnosticScan<'a> {
+    fn from_input(input: &'a str) -> Self {
+        let mut hints = TextDiagnosticHints::default();
+        let mut counts = BTreeMap::<&str, u32>::new();
+        let mut order = Vec::new();
+        for raw_line in input.lines() {
+            let line = raw_line.trim();
+            if line.is_empty() {
+                continue;
+            }
+            let interesting = line.bytes().any(|byte| {
+                matches!(byte, b':' | b'(') || byte.is_ascii_uppercase() || !byte.is_ascii()
+            });
+            if interesting {
+                hints.swc |= line.contains(",-") || line.contains("╭─");
+                hints.cpp_linker |= line.contains("undefined reference to ")
+                    || line.contains("undefined symbol:")
+                    || line.contains("unresolved external symbol ")
+                    || line.contains("Undefined symbols for architecture ");
+                hints.java_compiler |= line.contains(".java:");
+                hints.rust_header |= line.contains("error[E");
+                hints.rust_location |= line.contains("--> ");
+                let exception = line.contains("Error") || line.contains("Exception");
+                hints.javascript_exception |= exception;
+                hints.javascript_location |= [
+                    ".js:", ".jsx:", ".mjs:", ".cjs:", ".ts:", ".tsx:", ".mts:", ".cts:",
+                ]
+                .iter()
+                .any(|extension| line.contains(extension));
+                hints.java_test |=
+                    exception || line.contains("Failure") || line.contains("Caused by: ");
+                hints.python |= line.contains("Traceback (most recent call last):")
+                    || line.contains("File \"")
+                    || exception
+                    || line.contains("Failure")
+                    || line.contains("Warning")
+                    || line.contains("KeyboardInterrupt")
+                    || line.contains("SystemExit");
+            } else {
+                if line.starts_with("undefined reference to ")
+                    || line.starts_with("unresolved external symbol ")
+                {
+                    hints.cpp_linker = true;
+                }
+            }
+            if arbitration::may_be_diagnostic_line(line) {
+                if let Some(count) = counts.get_mut(line) {
+                    *count = count.saturating_add(1);
+                } else {
+                    order.push(line);
+                    counts.insert(line, 1);
+                }
+            }
+        }
+        let candidates = order
+            .into_iter()
+            .map(|line| (line, counts.get(line).copied().unwrap_or(1)))
+            .collect();
+        Self { hints, candidates }
+    }
+}
+
+fn may_contain_swc(hints: &TextDiagnosticHints) -> bool {
+    hints.swc
+}
+
+fn may_contain_cpp_linker(hints: &TextDiagnosticHints) -> bool {
+    hints.cpp_linker
+}
+
+fn may_contain_java_compiler(hints: &TextDiagnosticHints) -> bool {
+    hints.java_compiler
+}
+
+fn may_contain_rust_compiler(hints: &TextDiagnosticHints) -> bool {
+    hints.rust_header && hints.rust_location
+}
+
+fn may_contain_javascript_test(hints: &TextDiagnosticHints) -> bool {
+    hints.javascript_exception && hints.javascript_location
+}
+
+fn may_contain_java_test(hints: &TextDiagnosticHints) -> bool {
+    hints.java_test
+}
+
+fn may_contain_python(hints: &TextDiagnosticHints) -> bool {
+    hints.python
 }
 
 fn reduce_swc(input: &str, context: &mut TextDiagnosticContext<'_>) {

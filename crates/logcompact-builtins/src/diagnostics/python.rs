@@ -41,6 +41,10 @@ impl PythonDiagnosticParser {
             repetition_count: 1,
         })
     }
+
+    pub(crate) fn is_active(&self) -> bool {
+        self.location.is_some()
+    }
 }
 
 pub(super) fn parse_location(line: &str) -> Option<Location> {

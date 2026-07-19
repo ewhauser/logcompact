@@ -10,6 +10,11 @@ const COMPILER_CASES: &[&[u8]] = &[
     b"src/main.go:12:4: undefined: total\n",
     b"src/schema.proto:4:2: warning: Import common.proto is unused.\n",
     b"\x1b[31msrc/app.ts(8,11): error TS2322: Type 'number' is not assignable to type 'string'.\x1b[0m\r\n",
+    b"src/main.cc:12:4: error: unknown identifier 'total'\n",
+    b"src/Main.java:12: error: cannot find symbol\n  symbol: variable total\n",
+    b"TypeError: total is not a function\n    at src/invoice.test.js:8:3\n",
+    b"Exception in thread \"main\" java.lang.IllegalStateException: invalid total\n    at com.example.Invoice.total(Invoice.java:42)\n",
+    b"  x Expression expected\n   ,-[src/invoice.ts:2:1]\n 1 | export const invoice = {\n 2 |   total: ,\n   :          ^\n   `----\n",
 ];
 
 fn streaming(input: &[u8], chunk_size: usize) -> Reduction {
@@ -47,6 +52,11 @@ fn batch_and_streaming_diagnostics_match_for_every_chunk_width() {
                 ..ReductionOptions::default()
             },
             &NoRedaction,
+        );
+        assert!(
+            !batch.diagnostics.is_empty(),
+            "fixture did not exercise a built-in diagnostic: {:?}",
+            String::from_utf8_lossy(input)
         );
         for chunk_size in 1..=input.len().min(64) {
             let stream = without_provenance(streaming(input, chunk_size));
