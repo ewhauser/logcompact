@@ -10,7 +10,8 @@ order:
 Release Please owns the shared version, changelog, `vX.Y.Z` tag, and GitHub
 release. On every push to `main`, it creates or updates one release pull
 request from Conventional Commits. Merging that pull request creates the tag
-and release, then directly invokes the `Publish crates` workflow.
+and release, then directly invokes the `Publish crates` and `Release assets`
+workflows.
 
 The publisher performs the dependency-ordered sequence above and waits for each
 dependency to become visible before publishing its consumer. It is called
@@ -25,7 +26,21 @@ GitHub Actions token do not start separate tag-triggered workflows.
 3. Release Please updates `CHANGELOG.md`, `version.txt`, the workspace package
    and dependency versions, and the matching `Cargo.lock` package versions.
 4. Release Please creates `vX.Y.Z` and the GitHub release.
-5. The same workflow calls `Publish crates` for that exact tag.
+5. The same workflow publishes the crates and attaches native CLI archives for
+   Linux x86-64 and ARM64, macOS Intel and Apple Silicon, and Windows x86-64.
+
+Release Please only opens or updates a release pull request after a releasable
+Conventional Commit such as `feat:`, `fix:`, or `perf:` reaches `main`. A
+documentation, security, or maintenance-only `chore:` commit does not create an
+empty release pull request.
+
+## Release asset recovery
+
+The `Release assets` workflow accepts an existing `vX.Y.Z` tag through manual
+dispatch. It checks out that immutable tag, rebuilds all native archives,
+attests them, and replaces matching assets on the existing GitHub release. Use
+this path to resume a partial upload or backfill a release created before asset
+automation was enabled.
 
 The release configuration consistency check runs in `make check` and CI so a
 new workspace crate or version location cannot silently fall out of the release

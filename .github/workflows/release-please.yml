@@ -38,3 +38,15 @@ jobs:
     uses: ./.github/workflows/publish.yml
     with:
       tag: ${{ needs.release.outputs.tag_name }}
+
+  publish-assets:
+    name: publish release assets
+    needs: release
+    if: ${{ needs.release.outputs.release_created == 'true' }}
+    permissions:
+      contents: write # Attaches packaged CLIs to the GitHub release.
+      attestations: write # Stores Sigstore provenance for release assets.
+      id-token: write # Authenticates release attestations via OIDC.
+    uses: ./.github/workflows/release-assets.yml
+    with:
+      tag: ${{ needs.release.outputs.tag_name }}
