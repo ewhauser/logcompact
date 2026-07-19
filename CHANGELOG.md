@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.3](https://github.com/ewhauser/logcompact/compare/v0.3.2...v0.3.3) (2026-07-19)
+
+
+### Bug Fixes
+
+* attach native CLI release assets ([#16](https://github.com/ewhauser/logcompact/issues/16)) ([188e46d](https://github.com/ewhauser/logcompact/commit/188e46d80ade4d804f991b4666b0923a15158b3f))
+* encode release artifact output ([#18](https://github.com/ewhauser/logcompact/issues/18)) ([44e0ca3](https://github.com/ewhauser/logcompact/commit/44e0ca3bcd33099d9ef094d06ca8bd8f660c859f))
+* publish release after attaching assets ([#19](https://github.com/ewhauser/logcompact/issues/19)) ([005925c](https://github.com/ewhauser/logcompact/commit/005925c6c0c94d80c3b32806aeeec29d9b270d56))
+
 ## [0.3.2](https://github.com/ewhauser/logcompact/compare/v0.3.1...v0.3.2) (2026-07-19)
 
 
