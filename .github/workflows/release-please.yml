@@ -4,8 +4,7 @@ on:
   push:
     branches: [main]
 
-permissions:
-  contents: read
+permissions: {}
 
 concurrency:
   group: release-please
@@ -17,8 +16,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions:
-      contents: write
-      pull-requests: write
+      contents: write # Creates the release tag and GitHub release.
+      pull-requests: write # Updates the managed release pull request.
     outputs:
       release_created: ${{ steps.release.outputs.release_created }}
       tag_name: ${{ steps.release.outputs.tag_name }}
@@ -35,7 +34,7 @@ jobs:
     if: ${{ needs.release.outputs.release_created == 'true' }}
     permissions:
       contents: read
-      id-token: write
+      id-token: write # Authenticates crates.io publication via OIDC.
     uses: ./.github/workflows/publish.yml
     with:
       tag: ${{ needs.release.outputs.tag_name }}

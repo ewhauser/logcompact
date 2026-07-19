@@ -4,13 +4,21 @@ updates:
     directory: "/"
     schedule:
       interval: weekly
+    open-pull-requests-limit: 0
+    cooldown:
+      default-days: 7
     groups:
-      rust-dependencies:
+      rust-security-updates:
+        applies-to: security-updates
         patterns: ["*"]
   - package-ecosystem: github-actions
     directory: "/"
     schedule:
       interval: weekly
+    open-pull-requests-limit: 0
+    cooldown:
+      default-days: 7
     groups:
-      github-actions:
+      github-actions-security-updates:
+        applies-to: security-updates
         patterns: ["*"]
