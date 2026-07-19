@@ -1,0 +1,130 @@
+name: Release assets
+
+on:
+  workflow_call:
+    inputs:
+      tag:
+        description: Exact vX.Y.Z release tag to package
+        required: true
+        type: string
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Exact vX.Y.Z release tag to package or backfill
+        required: true
+        type: string
+
+permissions: {}
+
+concurrency:
+  group: release-assets-${{ inputs.tag }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: build (${{ matrix.target }})
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-24.04
+            target: x86_64-unknown-linux-gnu
+          - os: ubuntu-24.04-arm
+            target: aarch64-unknown-linux-gnu
+          - os: macos-15-intel
+            target: x86_64-apple-darwin
+          - os: macos-15
+            target: aarch64-apple-darwin
+          - os: windows-2025
+            target: x86_64-pc-windows-msvc
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+          ref: ${{ inputs.tag }}
+      - name: Checkout release tooling
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+          ref: ${{ github.workflow_sha }}
+          path: .release-workflow
+          sparse-checkout: |
+            dist-workspace.toml
+            scripts/install-cargo-dist.ps1
+            scripts/install-cargo-dist.sh
+          sparse-checkout-cone-mode: false
+      - name: Apply release packaging configuration
+        shell: bash
+        run: cp .release-workflow/dist-workspace.toml dist-workspace.toml
+      - name: Install Rust toolchain
+        run: rustup toolchain install 1.94.1 --profile minimal
+      - name: Install dist
+        if: runner.os != 'Windows'
+        run: ./.release-workflow/scripts/install-cargo-dist.sh
+      - name: Install dist on Windows
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: ./.release-workflow/scripts/install-cargo-dist.ps1
+      - name: Build release archive
+        id: artifacts
+        shell: bash
+        env:
+          CARGO_PROFILE_DIST_INHERITS: release
+          RELEASE_TAG: ${{ inputs.tag }}
+          DIST_TARGET: ${{ matrix.target }}
+        run: |
+          dist build \
+            --allow-dirty \
+            "--tag=$RELEASE_TAG" \
+            --print=linkage \
+            --output-format=json \
+            --artifacts=local \
+            "--target=$DIST_TARGET" > dist-manifest.json
+          dist print-upload-files-from-manifest \
+            --manifest dist-manifest.json >> "$GITHUB_OUTPUT"
+      - name: Upload packaged archive
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: release-${{ matrix.target }}
+          path: ${{ steps.artifacts.outputs.paths }}
+          if-no-files-found: error
+
+  publish:
+    name: publish
+    needs: build
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    permissions:
+      contents: write
+      attestations: write
+      id-token: write
+    steps:
+      - name: Download packaged archives
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7
+        with:
+          pattern: release-*
+          path: artifacts
+          merge-multiple: true
+      - name: Require release archives
+        shell: bash
+        run: |
+          shopt -s nullglob
+          artifacts=(artifacts/*)
+          if (( ${#artifacts[@]} < 10 )); then
+            echo "expected ten release assets, found ${#artifacts[@]}" >&2
+            exit 1
+          fi
+          printf '%s\n' "${artifacts[@]}"
+      - name: Attest release archives
+        uses: actions/attest@f7c74d28b9d84cb8768d0b8ca14a4bac6ef463e6 # v4.2.0
+        with:
+          subject-path: artifacts/*
+      - name: Attach archives to GitHub release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASE_TAG: ${{ inputs.tag }}
+        run: gh release upload "$RELEASE_TAG" artifacts/* --clobber --repo "$GITHUB_REPOSITORY"
