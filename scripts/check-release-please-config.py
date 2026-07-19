@@ -89,4 +89,10 @@ release_docs = (root / "RELEASING.md").read_text()
 assert "workflow: `release-please.yml`" in release_docs
 assert "workflow: `publish.yml`" in release_docs
 
+release_workflow = (root / ".github" / "workflows" / "release-please.yml").read_text()
+assert (
+    "googleapis/release-please-action@"
+    "5c625bfb5d1ff62eadeeb3772007f7f66fdcf071 # v4.4.1"
+) in release_workflow
+
 print("release-please configuration is consistent")
