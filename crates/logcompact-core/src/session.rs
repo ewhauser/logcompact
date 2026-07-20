@@ -54,16 +54,6 @@ impl ParserPlan {
         self.parsers.push(Box::new(parser));
         Ok(())
     }
-
-    #[must_use]
-    pub fn len(&self) -> usize {
-        self.parsers.len()
-    }
-
-    #[must_use]
-    pub fn is_empty(&self) -> bool {
-        self.parsers.is_empty()
-    }
 }
 
 /// Invalid immutable parser-plan construction.
@@ -98,27 +88,21 @@ pub struct Emitter<'a> {
     provenance: EmitterProvenance<'a>,
 }
 
-enum EmitterProvenance<'a> {
-    None,
-    Context {
-        source: &'static str,
-        scope: Option<&'a Scope>,
-        span: Option<(Stream, u64, u64)>,
-        parser: &'static str,
-    },
+struct EmitterProvenance<'a> {
+    source: &'static str,
+    scope: Option<&'a Scope>,
+    span: Option<(Stream, u64, u64)>,
+    parser: &'static str,
 }
 
 impl EmitterProvenance<'_> {
     fn materialize(&self) -> Option<Provenance> {
-        let Self::Context {
+        let Self {
             source,
             scope,
             span,
             parser,
-        } = self
-        else {
-            return None;
-        };
+        } = self;
         let mut provenance = Provenance::new(*source).with_parser(*parser);
         if let Some(scope) = scope {
             provenance = provenance.with_scope(scope);
@@ -284,27 +268,6 @@ impl<'a> ReductionSession<'a> {
         true
     }
 
-    /// Adds a trusted structured finding to the same redaction and budget path.
-    pub fn emit_structured(&mut self, scope_id: &str, mut diagnostic: Diagnostic) -> bool {
-        let Some(state) = self.scopes.get(scope_id) else {
-            return false;
-        };
-        if diagnostic.provenance.is_none() {
-            diagnostic.provenance = Some(
-                Provenance::new("structured")
-                    .with_scope(&state.scope)
-                    .with_parser("adapter"),
-            );
-        }
-        let mut emitter = Emitter {
-            store: &mut self.candidates,
-            maximum: self.options.limits.max_candidates,
-            provenance: EmitterProvenance::None,
-        };
-        emitter.diagnostic(diagnostic);
-        true
-    }
-
     pub fn end_scope(&mut self, scope_id: &str, reason: EndReason) -> bool {
         if !self.scopes.contains_key(scope_id) {
             return false;
@@ -350,7 +313,7 @@ impl<'a> ReductionSession<'a> {
             let mut emitter = Emitter {
                 store: &mut self.candidates,
                 maximum: self.options.limits.max_candidates,
-                provenance: EmitterProvenance::Context {
+                provenance: EmitterProvenance {
                     source: "parser",
                     scope: None,
                     span: None,
@@ -409,7 +372,7 @@ impl<'a> ReductionSession<'a> {
             let mut emitter = Emitter {
                 store: &mut self.candidates,
                 maximum: self.options.limits.max_candidates,
-                provenance: EmitterProvenance::Context {
+                provenance: EmitterProvenance {
                     source: stream_name(stream),
                     scope: Some(&state.scope),
                     span: Some((stream, stream_line, stream_line)),
@@ -428,7 +391,7 @@ impl<'a> ReductionSession<'a> {
             let mut emitter = Emitter {
                 store: &mut self.candidates,
                 maximum: self.options.limits.max_candidates,
-                provenance: EmitterProvenance::Context {
+                provenance: EmitterProvenance {
                     source: "boundary",
                     scope: Some(scope),
                     span: None,

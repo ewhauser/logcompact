@@ -1,4 +1,4 @@
-.PHONY: build test fmt lint doc boundary release-config workflow-security check package-check fuzz-smoke bench bench-core bench-builtins
+.PHONY: build test fmt lint doc boundary release-config workflow-security hawk check package-check fuzz-smoke bench bench-core bench-builtins
 
 build:
 	cargo build --workspace --all-features --locked
@@ -23,6 +23,13 @@ release-config:
 
 workflow-security:
 	python3 scripts/check-workflow-security.py
+
+hawk:
+	cargo +1.97.0 hawk check --manifest-path Cargo.toml -A warnings \
+		-D hawk::dead_public \
+		-D hawk::unfulfilled_expectation \
+		-D hawk::unknown_item \
+		-D hawk::ambiguous_item
 
 check: fmt boundary release-config workflow-security test lint doc
 
