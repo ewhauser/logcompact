@@ -1,0 +1,55 @@
+[[production]]
+package = "logcompact"
+bin = "logcompact"
+reason = "shipped command-line application"
+
+# These hidden feature-gated hooks support the downstream bazel-mcp adapter.
+# Hawk cannot see consumers outside this workspace, so keep checked expectations
+# for exactly the public surface that is intentionally external.
+[[override]]
+lint = "hawk::dead_public"
+crate = "logcompact_builtins"
+item = "__parse_cpp_diagnostic"
+kind = "function"
+level = "expect"
+reason = "used by bazel-mcp with the test-support feature"
+
+[[override]]
+lint = "hawk::dead_public"
+crate = "logcompact_builtins"
+item = "__parse_cpp_linker_diagnostic"
+kind = "function"
+level = "expect"
+reason = "used by bazel-mcp with the test-support feature"
+
+[[override]]
+lint = "hawk::dead_public"
+crate = "logcompact_builtins"
+item = "__cpp_path_end"
+kind = "function"
+level = "expect"
+reason = "used by bazel-mcp with the test-support feature"
+
+[[override]]
+lint = "hawk::dead_public"
+crate = "logcompact_builtins"
+item = "__parse_swc_diagnostics"
+kind = "function"
+level = "expect"
+reason = "used by bazel-mcp with the test-support feature"
+
+[[override]]
+lint = "hawk::dead_public"
+crate = "logcompact_builtins"
+item = "__parse_protobuf_diagnostic"
+kind = "function"
+level = "expect"
+reason = "used by bazel-mcp with the test-support feature"
+
+[[override]]
+lint = "hawk::dead_public"
+crate = "logcompact_builtins"
+item = "__parse_typescript_diagnostic"
+kind = "function"
+level = "expect"
+reason = "used by bazel-mcp with the test-support feature"
