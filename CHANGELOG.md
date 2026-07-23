@@ -5,6 +5,27 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.0](https://github.com/ewhauser/logcompact/compare/v0.3.3...v0.4.0) (2026-07-20)
+
+
+### ⚠ BREAKING CHANGES
+
+* **core:** integrate Hawk and remove dead APIs ([#41](https://github.com/ewhauser/logcompact/issues/41))
+
+### Features
+
+* **builtins:** add pytest diagnostic coverage ([#23](https://github.com/ewhauser/logcompact/issues/23)) ([18b4671](https://github.com/ewhauser/logcompact/commit/18b46712311dbb8bc872e05b94c9d3f488e30663))
+
+
+### Bug Fixes
+
+* require tag-capable Release Please ([#21](https://github.com/ewhauser/logcompact/issues/21)) ([b041d3d](https://github.com/ewhauser/logcompact/commit/b041d3d79aee367acbee2adb6e1ff6b49bb02880))
+
+
+### Code Refactoring
+
+* **core:** integrate Hawk and remove dead APIs ([#41](https://github.com/ewhauser/logcompact/issues/41)) ([230edd2](https://github.com/ewhauser/logcompact/commit/230edd22bc3e1ed0f8db20dcf6aa04b50556f658))
+
 ## [0.3.3](https://github.com/ewhauser/logcompact/compare/v0.3.2...v0.3.3) (2026-07-19)
 
 
